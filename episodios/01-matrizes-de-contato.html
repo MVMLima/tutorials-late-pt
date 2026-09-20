@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Matrizes de contato – Modelagem de cenários para análise de surtos com R</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../episodios/02-simular-transmissao.html" rel="next">
+<link href="../setup.html" rel="prev">
+<link href="../img/pkgs-hexlogos.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-4f8723c4e91b4923163491bd987d7814.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../episodios/01-matrizes-de-contato.html"><span class="chapter-title">Matrizes de contato</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Modelagem de cenários para análise de surtos com R</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/MVMLima/tutorials-late-pt" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <div class="dropdown">
+      <a href="" title="Compartilhar" id="quarto-navigation-tool-dropdown-0" class="quarto-navigation-tool dropdown-toggle px-1" data-bs-toggle="dropdown" aria-expanded="false" role="link" aria-label="Compartilhar"><i class="bi bi-share"></i></a>
+      <ul class="dropdown-menu" aria-labelledby="quarto-navigation-tool-dropdown-0">
+          <li>
+            <a class="dropdown-item sidebar-tools-main-item" href="https://twitter.com/intent/tweet?url=|url|">
+              <i class="bi bi-twitter pe-1"></i>
+            Twitter
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item sidebar-tools-main-item" href="https://www.linkedin.com/sharing/share-offsite/?url=|url|">
+              <i class="bi bi-linkedin pe-1"></i>
+            LinkedIn
+            </a>
+          </li>
+      </ul>
+    </div>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Modelagem de cenários para análise de surtos com R</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../setup.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Configuração</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/01-matrizes-de-contato.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Matrizes de contato</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/02-simular-transmissao.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Simular a transmissão</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/03-escolher-modelo.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Escolher um modelo adequado</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/04-modelar-intervencoes.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Modelar intervenções</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/05-comparar-intervencoes.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Comparar desfechos de saúde pública das intervenções</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/06-comparar-vacinacao.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Comparar estratégias de vacinação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/07-carga-de-doenca.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Modelar a carga de doença</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../perfis.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Para quem são estes tutoriais</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../glossario.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Glossário de termos: Epiverse-TRACE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../instrutor.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Notas para quem conduz a oficina</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../licenca.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Licença e créditos</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Nesta página</h2>
+   
+  <ul>
+  <li><a href="#introdução" id="toc-introdução" class="nav-link active" data-scroll-target="#introdução">Introdução</a></li>
+  <li><a href="#a-matriz-de-contato" id="toc-a-matriz-de-contato" class="nav-link" data-scroll-target="#a-matriz-de-contato">A matriz de contato</a></li>
+  <li><a href="#usando-o-socialmixr" id="toc-usando-o-socialmixr" class="nav-link" data-scroll-target="#usando-o-socialmixr">Usando o <code>socialmixr</code></a>
+  <ul class="collapse">
+  <li><a href="#matrizes-de-contato-simétricas" id="toc-matrizes-de-contato-simétricas" class="nav-link" data-scroll-target="#matrizes-de-contato-simétricas">Matrizes de contato simétricas</a></li>
+  </ul></li>
+  <li><a href="#encontrar-mais-inquéritos-por-doi" id="toc-encontrar-mais-inquéritos-por-doi" class="nav-link" data-scroll-target="#encontrar-mais-inquéritos-por-doi">Encontrar mais inquéritos por DOI</a></li>
+  <li><a href="#análises-com-matrizes-de-contato" id="toc-análises-com-matrizes-de-contato" class="nav-link" data-scroll-target="#análises-com-matrizes-de-contato">Análises com matrizes de contato</a>
+  <ul class="collapse">
+  <li><a href="#converter-a-matriz-de-contato-no-número-esperado-de-casos-secundários" id="toc-converter-a-matriz-de-contato-no-número-esperado-de-casos-secundários" class="nav-link" data-scroll-target="#converter-a-matriz-de-contato-no-número-esperado-de-casos-secundários">1. Converter a matriz de contato no número esperado de casos secundários</a></li>
+  <li><a href="#converter-a-matriz-de-contato-em-taxas-de-contato" id="toc-converter-a-matriz-de-contato-em-taxas-de-contato" class="nav-link" data-scroll-target="#converter-a-matriz-de-contato-em-taxas-de-contato">2. Converter a matriz de contato em taxas de contato</a></li>
+  <li><a href="#em-modelos-matemáticos" id="toc-em-modelos-matemáticos" class="nav-link" data-scroll-target="#em-modelos-matemáticos">Em modelos matemáticos</a></li>
+  </ul></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo">Resumo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/MVMLima/tutorials-late-pt/edit/main/episodios/01-matrizes-de-contato.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/MVMLima/tutorials-late-pt/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-title">Matrizes de contato</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled" title="Perguntas">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Perguntas
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>O que é uma matriz de contato?</li>
+<li>Como as matrizes de contato são estimadas?</li>
+<li>Como as matrizes de contato são usadas na análise epidemiológica?</li>
+</ul>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Objetivos">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Objetivos
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>Usar o pacote R <code>socialmixr</code> para estimar uma matriz de contato</li>
+<li>Compreender os diferentes tipos de análise em que as matrizes de contato podem ser usadas</li>
+</ul>
+</div>
+</div>
+<!-- ::::::::::::::::::::::::::::::::::::: prereq -->
+<!-- ## Prerequisites -->
+<!-- ::::::::::::::::::::::::::::::::: -->
+<section id="introdução" class="level2">
+<h2 class="anchored" data-anchor-id="introdução">Introdução</h2>
+<p>Alguns grupos de indivíduos têm mais contatos do que outros; um estudante em idade escolar, por exemplo, tem em média muito mais contatos diários do que uma pessoa idosa. Essa heterogeneidade nos padrões de contato entre diferentes grupos pode afetar a transmissão de doenças, pois determinados grupos têm maior probabilidade de transmitir para outros indivíduos dentro do mesmo grupo, bem como para outros grupos. A taxa na qual indivíduos dentro de grupos e entre grupos fazem contato com outros pode ser sintetizada em uma matriz de contato.</p>
+<p>Neste tutorial, você vai aprender como as matrizes de contato podem ser usadas em diferentes análises, como o pacote <code>{contactsurveys}</code> pode ser usado para acessar dados de inquéritos de diferentes países e como o pacote <code>{socialmixr}</code> pode ser usado para estimar matrizes de contato. Usaremos <code>{dplyr}</code>, <code>{ggplot2}</code> e o pipe <code>%&gt;%</code> para conectar algumas de suas funções; por isso, vamos carregar também o pacote <code>{tidyverse}</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(contactsurveys)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(socialmixr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(wpp2024)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+</section>
+<section id="a-matriz-de-contato" class="level2">
+<h2 class="anchored" data-anchor-id="a-matriz-de-contato">A matriz de contato</h2>
+<p>A matriz de contato básica representa a quantidade de contato ou de mistura dentro de diferentes subgrupos de uma população e entre eles. Os subgrupos são frequentemente faixas etárias, mas também podem ser:</p>
+<ul>
+<li>Áreas geográficas (por exemplo, diferentes regiões ou países)</li>
+<li>Grupos de risco (por exemplo, ocupações de alto/baixo risco)</li>
+<li>Ambientes sociais (por exemplo, domicílio, local de trabalho, escola)</li>
+</ul>
+<p>Por exemplo, uma matriz de contato hipotética representando o número médio de contatos por dia entre crianças e adultos poderia ser:</p>
+<p><span class="math display">\[
+\begin{bmatrix}
+2 &amp; 2\\
+1 &amp; 3
+\end{bmatrix}
+\]</span></p>
+<p>Neste exemplo, usamos isso para representar que crianças encontram, em média, outras 2 crianças e 2 adultos por dia (primeira linha), e adultos encontram, em média, 1 criança e outros 3 adultos por dia (segunda linha). Podemos usar esse tipo de informação para levar em conta o papel que a heterogeneidade nos contatos desempenha na transmissão de doenças infecciosas.</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Uma nota sobre notação
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Em uma matriz de contato, o elemento <span class="math inline">\(C[i,j]\)</span>, na linha <span class="math inline">\(i\)</span> e coluna <span class="math inline">\(j\)</span>:</p>
+<ul>
+<li>Representa o número médio de contatos que um indivíduo do grupo <span class="math inline">\(i\)</span> tem com indivíduos do grupo <span class="math inline">\(j\)</span></li>
+<li>É calculado dividindo o número total de contatos entre os grupos <span class="math inline">\(i\)</span> e <span class="math inline">\(j\)</span> pelo tamanho do grupo <span class="math inline">\(i\)</span></li>
+</ul>
+</div>
+</div>
+</section>
+<section id="usando-o-socialmixr" class="level2">
+<h2 class="anchored" data-anchor-id="usando-o-socialmixr">Usando o <code>socialmixr</code></h2>
+<p>As matrizes de contato são comumente estimadas a partir de estudos que utilizam diários para registrar interações. Por exemplo, o inquérito POLYMOD mediu padrões de contato em 8 países europeus utilizando dados sobre o local e a duração dos contatos relatados pelos participantes do estudo <a href="https://doi.org/10.1371/journal.pmed.0050074">(Mossong et al.&nbsp;2008)</a>.</p>
+<p>O pacote R <code>{socialmixr}</code> contém funções capazes de estimar matrizes de contato a partir do POLYMOD e de outros inquéritos. Podemos baixar e carregar os dados do inquérito POLYMOD diretamente do Zenodo usando <code>{contactsurveys}</code> e <code>{socialmixr}</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>survey_files <span class="ot">&lt;-</span> contactsurveys<span class="sc">::</span><span class="fu">download_survey</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">survey =</span> <span class="st">"https://doi.org/10.5281/zenodo.3874557"</span>,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>survey_load <span class="ot">&lt;-</span> socialmixr<span class="sc">::</span><span class="fu">load_survey</span>(<span class="at">files =</span> survey_files)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Inspecionar os países disponíveis
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Um único arquivo de inquérito pode conter dados de vários países. Você pode inspecionar os países disponíveis com:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(survey_load<span class="sc">$</span>participants<span class="sc">$</span>country)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "Belgium"        "Finland"        "Germany"        "Italy"         
+[5] "Luxembourg"     "Netherlands"    "Poland"         "United Kingdom"</code></pre>
+</div>
+</div>
+</div>
+</div>
+<p>Obtemos a matriz de contato para o Reino Unido passando <code>countries = "United Kingdom"</code> para selecionar os dados do país desejado, <code>age_limits</code> para definir as faixas etárias e <code>survey_pop</code> para fornecer a estrutura populacional de <code>{wpp2024}</code> exigida pelo <code>{socialmixr}</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="No Brasil: de onde tirar a estrutura populacional">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>No Brasil: de onde tirar a estrutura populacional
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>O <code>{wpp2024}</code> traz as projeções da ONU, que servem para qualquer país. Para usar a população brasileira por faixa etária — nacional, estadual ou municipal —, o caminho é o Censo e as estimativas/projeções do IBGE, publicadas pelo DATASUS (<a href="https://datasus.saude.gov.br/populacao-residente/">População residente — DATASUS</a>). Há também o pacote <code>{microdatasus}</code>, que baixa esses microdados direto para o R (<a href="https://cran.r-project.org/package=microdatasus">microdatasus (CRAN)</a>).</p>
+</div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(popAge1dt, <span class="at">package =</span> <span class="st">"wpp2024"</span>)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>uk_pop <span class="ot">&lt;-</span> popAge1dt <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(name <span class="sc">==</span> <span class="st">"United Kingdom"</span>, year <span class="sc">==</span> <span class="dv">2020</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="at">lower.age.limit =</span> age, <span class="at">population =</span> pop) <span class="sc">%&gt;%</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">population =</span> population <span class="sc">*</span> <span class="dv">1000</span>)</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>contacts_byage <span class="ot">&lt;-</span> socialmixr<span class="sc">::</span><span class="fu">contact_matrix</span>(</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">survey =</span> survey_load,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">countries =</span> <span class="st">"United Kingdom"</span>,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">age_limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">20</span>, <span class="dv">40</span>),</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">symmetric =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">survey_pop =</span> uk_pop</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>contacts_byage</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$matrix
+          contact.age.group
+age.group    [0,20)  [20,40) [40,Inf)
+  [0,20)   7.883663 3.114224 3.230298
+  [20,40)  2.799168 4.854839 4.873347
+  [40,Inf) 1.507146 2.529653 5.005571
+
+$demography
+   age.group population proportion  year
+      &lt;char&gt;      &lt;num&gt;      &lt;num&gt; &lt;int&gt;
+1:    [0,20)   15842062  0.2349693    NA
+2:   [20,40)   17625140  0.2614159    NA
+3:  [40,Inf)   33954633  0.5036148    NA
+
+$participants
+   age.group participants proportion
+      &lt;char&gt;        &lt;int&gt;      &lt;num&gt;
+1:    [0,20)          404  0.3996044
+2:   [20,40)          248  0.2453017
+3:  [40,Inf)          359  0.3550940</code></pre>
+</div>
+</div>
+<section id="matrizes-de-contato-simétricas" class="level3">
+<h3 class="anchored" data-anchor-id="matrizes-de-contato-simétricas">Matrizes de contato simétricas</h3>
+<p>Embora a matriz de contato <code>contacts_byage$matrix</code> não seja matematicamente simétrica em si, ela satisfaz a condição de que o número total de contatos de um grupo com outro seja igual ao inverso.</p>
+<p>Em outras palavras: <code>contacts_byage$matrix[j,i]*contacts_byage$demography$proportion[j] = contacts_byage$matrix[i,j]*contacts_byage$demography$proportion[i]</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>contacts_byage<span class="sc">$</span>matrix <span class="sc">*</span> contacts_byage<span class="sc">$</span>demography<span class="sc">$</span>population</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          contact.age.group
+age.group     [0,20)  [20,40)  [40,Inf)
+  [0,20)   124893484 49335724  51174588
+  [20,40)   49335724 85567212  85893423
+  [40,Inf)  51174588 85893423 169962327</code></pre>
+</div>
+</div>
+<p>Para a explicação matemática, veja o exemplo prático abaixo.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Detalhes">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Detalhes
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<section id="exemplo-prático" class="level3 callout-body-container callout-body">
+<h3 class="anchored" data-anchor-id="exemplo-prático">Exemplo prático</h3>
+<p>Relembre a matriz de contato hipotética apresentada anteriormente, representando o número médio de contatos por dia entre crianças e adultos:</p>
+<p><span class="math display">\[
+C =
+\begin{bmatrix}
+2 &amp; 2\\
+1 &amp; 3
+\end{bmatrix}
+\]</span></p>
+<p>ou seja, uma criança tem, em média, 2 contatos com outras crianças e 2 contatos com adultos por dia; um adulto tem, em média, 1 contato com crianças e 3 contatos com outros adultos por dia. Suponha que a população de crianças seja <span class="math inline">\(N_{child} = x\)</span> e a população de adultos seja <span class="math inline">\(N_{adult} = 3x\)</span>.</p>
+<p>Para obter o número total de contatos, redistribuímos o número médio de contatos pelo tamanho da população de cada grupo: <span class="math inline">\(T_{ij} = m_{ij} N_i\)</span></p>
+<p><span class="math display">\[
+T =
+\begin{bmatrix}
+2 \times x &amp; 2 \times x\\
+1 \times 3x &amp; 3 \times 3x
+\end{bmatrix}
+=
+\begin{bmatrix}
+2x &amp; 2x\\
+3x &amp; 9x
+\end{bmatrix}
+\]</span></p>
+<p>Em princípio, o número total de contatos deveria ser o mesmo em ambas as direções, isto é, <span class="math inline">\(T_{1,2} = T_{2,1}\)</span>. Aqui, <span class="math inline">\(T_{1,2} = 2x\)</span>, mas <span class="math inline">\(T_{2,1} = 3x\)</span>: eles divergem, de modo que este exemplo ilustrativo <em>não</em> é recíproco — exatamente a situação descrita acima, em que a variação amostral faz com que esses totais normalmente não coincidam com exatidão.</p>
+<p><span class="math inline">\(T_{1,2}\)</span> e <span class="math inline">\(T_{2,1}\)</span> são duas ‘medições’ diferentes e com ruído do mesmo número subjacente de eventos de contato entre crianças e adultos — uma relatada a partir das crianças e outra a partir dos adultos. Nenhuma das duas é isoladamente mais confiável que a outra. Assim como calculamos a média de medições repetidas de uma grandeza para aproximar seu valor verdadeiro, combinamos os dois totais e calculamos a média deles:</p>
+<p><span class="math display">\[
+\frac{T_{1,2}+T_{2,1}}{2} = \frac{2x+3x}{2} = 2.5x
+\]</span></p>
+<p>Esse valor combinado, <span class="math inline">\(2.5x\)</span>, é nossa melhor estimativa pontual do número total verdadeiro (simétrico) de contatos entre os dois grupos — o mesmo valor independentemente da direção de onde partimos. Para convertê-lo novamente em uma taxa per capita, dividimos pelo tamanho populacional do grupo que <em>relatou</em> para cada direção:</p>
+<p><span class="math display">\[
+m'_{1,2} = \frac{2.5x}{N_{child}} = \frac{2.5x}{x} = 2.5 \qquad\qquad m'_{2,1} = \frac{2.5x}{N_{adult}} = \frac{2.5x}{3x} = \frac{5}{6}
+\]</span></p>
+<p>No nível dos contatos totais, isso resulta na matriz simétrica</p>
+<p><span class="math display">\[
+T' =
+\begin{bmatrix}
+2x &amp; 2.5x\\
+2.5x &amp; 9x
+\end{bmatrix}
+\]</span></p>
+<p>e, convertida de volta em taxas per capita, na matriz de contato simetrizada</p>
+<p><span class="math display">\[
+C' =
+\begin{bmatrix}
+2 &amp; 2.5\\
+5/6 &amp; 3
+\end{bmatrix}
+\]</span></p>
+<p>Esse procedimento de combinar e redistribuir é expresso como uma fórmula única <a href="https://epiforecasts.io/socialmixr/articles/socialmixr.html#symmetric-contact-matrices">na seção correspondente da documentação do <code>socialmixr</code></a>.</p>
+</section>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Por que uma matriz de contato seria não simétrica?
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Um dos argumentos que fornecemos à função <code>contact_matrix()</code> é <code>symmetric=TRUE</code>. Isso garante que o número total de contatos de um grupo com outro seja igual ao total do segundo grupo de volta para o primeiro (consulte a <a href="https://cran.r-project.org/web/packages/socialmixr/vignettes/socialmixr.html">vinheta</a> do <code>socialmixr</code> para mais detalhes).</p>
+<p>No entanto, quando as matrizes de contato são estimadas a partir de inquéritos ou de outras fontes, o número de contatos <em>relatado</em> pode diferir entre faixas etárias por diversas razões:</p>
+<ul>
+<li>Viés de memória (recall bias): diferentes faixas etárias podem ter capacidades distintas de lembrar e relatar contatos com precisão</li>
+<li>Viés de relato (reporting bias): alguns grupos podem supernotificar ou subnotificar sistematicamente seus contatos</li>
+<li>Incerteza amostral: tamanhos amostrais limitados podem levar a variações estatísticas <a href="https://doi.org/10.1371/journal.pcbi.1009098">(Prem et al.&nbsp;2021)</a></li>
+</ul>
+<p>Se <code>symmetric</code> for definido como TRUE, a função <code>contact_matrix()</code> usará internamente uma média dos contatos relatados para garantir que os totais resultantes de contatos sejam simétricos.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="encontrar-mais-inquéritos-por-doi" class="level2">
+<h2 class="anchored" data-anchor-id="encontrar-mais-inquéritos-por-doi">Encontrar mais inquéritos por DOI</h2>
+<p>O exemplo acima utiliza o inquérito POLYMOD. Outros inquéritos estão disponíveis na comunidade <a href="https://zenodo.org/communities/social_contact_data/">Zenodo Social Contact Data</a>.</p>
+<p>Para usar um inquérito diferente, identifique primeiro o seu DOI. Navegue pelos inquéritos disponíveis na comunidade <a href="https://zenodo.org/communities/social_contact_data/">Zenodo Social Contact Data</a> ou liste-os programaticamente com <code>contactsurveys::list_surveys()</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(contactsurveys)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Obter a URL para os dados do inquérito de contato da Zâmbia a partir de {contactsurveys}</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>contactsurveys<span class="sc">::</span><span class="fu">list_surveys</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(stringr<span class="sc">::</span><span class="fu">str_detect</span>(title, <span class="st">"Zambia"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">pull</span>(url)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "https://doi.org/10.5281/zenodo.3874675"</code></pre>
+</div>
+</div>
+<p>Em seguida, baixe e carregue o inquérito com <code>contactsurveys::download_survey()</code> e <code>socialmixr::load_survey()</code>. Aqui usamos o inquérito de contato da Zâmbia e da África do Sul:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Baixar e carregar do Zenodo os dados do inquérito de contato da Zâmbia</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>survey_files_zambia <span class="ot">&lt;-</span> contactsurveys<span class="sc">::</span><span class="fu">download_survey</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">survey =</span> <span class="st">"https://doi.org/10.5281/zenodo.3874675"</span>,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>survey_load_zambia <span class="ot">&lt;-</span> socialmixr<span class="sc">::</span><span class="fu">load_survey</span>(<span class="at">files =</span> survey_files_zambia)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="desafio callout callout-style-default callout-tip callout-titled" title="Desafio">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Desafio
+</div>
+</div>
+<section id="matriz-de-contato-da-zâmbia" class="level2 callout-body-container callout-body">
+<h2 class="anchored" data-anchor-id="matriz-de-contato-da-zâmbia">Matriz de contato da Zâmbia</h2>
+<p>O pacote R {socialmixr} contém funções capazes de estimar matrizes de contato a partir do POLYMOD e de outros inquéritos. As saídas incluem informações demográficas, como o tamanho da população e o número de participantes no estudo. Usando o {socialmixr}:</p>
+<ul>
+<li><p>Acesse o inquérito da Zâmbia.</p></li>
+<li><p>Gere uma matriz de contato simétrica para a Zâmbia usando as seguintes faixas etárias:</p>
+<ul>
+<li>[0,20)</li>
+<li>20+</li>
+</ul></li>
+<li><p>Acesse o vetor com o tamanho da <code>population</code> por faixa etária a partir do conjunto de dados <code>demography</code> dentro da saída da matriz de contato.</p></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="Dica">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-8-contents" aria-controls="callout-8" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Dica
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-8" class="callout-8-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>O objeto de inquérito <code>survey_load_zambia</code> contém dados de dois países. Se você precisa estimar a matriz de contato social a partir dos dados do país específico Zâmbia, identifique qual argumento em <code>socialmixr::contact_matrix()</code> é necessário para isso.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Inspecionar os países dentro do objeto do inquérito</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">levels</span>(survey_load_zambia<span class="sc">$</span>participants<span class="sc">$</span>country)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "South Africa" "Zambia"      </code></pre>
+</div>
+</div>
+<p>De forma semelhante ao código acima, para acessar valores de um vetor dentro de um dataframe, você pode usar o operador de cifrão: <code>$</code></p>
+</div>
+</div>
+</div>
+</section>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Para o instrutor">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-10-contents" aria-controls="callout-10" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>Para o instrutor
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-10" class="callout-10-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(popAge1dt, <span class="at">package =</span> <span class="st">"wpp2024"</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>zambia_pop <span class="ot">&lt;-</span> popAge1dt <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(name <span class="sc">==</span> <span class="st">"Zambia"</span>, year <span class="sc">==</span> <span class="dv">2020</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="at">lower.age.limit =</span> age, <span class="at">population =</span> pop) <span class="sc">%&gt;%</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">population =</span> population <span class="sc">*</span> <span class="dv">1000</span>)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Gerar a matriz de contato apenas para a Zâmbia</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>contacts_byage_zambia <span class="ot">&lt;-</span> socialmixr<span class="sc">::</span><span class="fu">contact_matrix</span>(</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">survey =</span> survey_load_zambia,</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">countries =</span> <span class="st">"Zambia"</span>, <span class="co"># key argument</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">age_limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">20</span>),</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">symmetric =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">survey_pop =</span> zambia_pop</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Survey contains multiple observations per participant (4531 rows, 3576 unique
+participants).
+• Results will aggregate across all observations.
+ℹ Use `filter` to select by "Building_id".</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Imprimir a matriz de contato apenas para a Zâmbia</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>contacts_byage_zambia</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>$matrix
+          contact.age.group
+age.group    [0,20) [20,Inf)
+  [0,20)   3.766393 1.560562
+  [20,Inf) 1.840187 2.642584
+
+$demography
+   age.group population proportion  year
+      &lt;char&gt;      &lt;num&gt;      &lt;num&gt; &lt;int&gt;
+1:    [0,20)   10460632  0.5411123    NA
+2:  [20,Inf)    8871089  0.4588877    NA
+
+$participants
+   age.group participants proportion
+      &lt;char&gt;        &lt;int&gt;      &lt;num&gt;
+1:    [0,20)          244 0.08531469
+2:  [20,Inf)         2616 0.91468531</code></pre>
+</div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Imprimir o vetor com o tamanho da população para o {epidemics}</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>contacts_byage_zambia<span class="sc">$</span>demography<span class="sc">$</span>population</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 10460632  8871089</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Matrizes de contato sintéticas
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>As matrizes de contato podem ser estimadas a partir de dados obtidos por diários (como o POLYMOD), inquéritos ou dados de contato, ou matrizes sintéticas podem ser utilizadas. <a href="https://doi.org/10.1371/journal.pcbi.1009098">Prem et al.&nbsp;2021</a> utilizaram os dados do POLYMOD em um modelo hierárquico bayesiano para projetar matrizes de contato para outros 177 países.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="No Brasil: não existe inquérito de contato brasileiro aqui">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>No Brasil: não existe inquérito de contato brasileiro aqui
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A coleção consultada pelo <code>{contactsurveys}</code> não tem nenhum inquérito brasileiro: em 20/09/2026 a <code>contactsurveys::list_surveys()</code> devolvia 48 inquéritos depositados, todos de outros países.</p>
+<p>Na prática, isso significa que quem modela o Brasil precisa escolher uma matriz de contato justificada — sintética, adaptada de outro país ou de um inquérito próprio — e não uma matriz medida na população brasileira. Registre essa escolha junto com a análise: ela muda o resultado.</p>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="análises-com-matrizes-de-contato" class="level2">
+<h2 class="anchored" data-anchor-id="análises-com-matrizes-de-contato">Análises com matrizes de contato</h2>
+<p>As matrizes de contato podem ser usadas em uma ampla variedade de análises epidemiológicas; elas podem ser utilizadas:</p>
+<ul>
+<li>para calcular o número básico de reprodução levando em conta diferentes taxas de contato entre faixas etárias <a href="https://doi.org/10.1186/s12916-019-1413-7">(Funk et al.&nbsp;2019)</a>,</li>
+<li>para calcular o tamanho final de uma epidemia, como no pacote R <code>{finalsize}</code>,</li>
+<li>para avaliar o impacto de intervenções, encontrando a mudança relativa entre as matrizes de contato pré e pós-intervenção para calcular a diferença relativa em <span class="math inline">\(R_0\)</span> <a href="https://doi.org/10.1186/s12916-020-01597-8">(Jarvis et al.&nbsp;2020)</a>,</li>
+<li>e em modelos matemáticos de transmissão dentro de uma população, para levar em conta padrões de contato específicos de cada grupo.</li>
+</ul>
+<p>No entanto, todas essas aplicações exigem que façamos alguns cálculos adicionais utilizando a matriz de contato. Especificamente, há dois cálculos principais que frequentemente precisamos fazer:</p>
+<section id="converter-a-matriz-de-contato-no-número-esperado-de-casos-secundários" class="level3">
+<h3 class="anchored" data-anchor-id="converter-a-matriz-de-contato-no-número-esperado-de-casos-secundários">1. Converter a matriz de contato no número esperado de casos secundários</h3>
+<p>Se os contatos variam entre os grupos, então o número médio de casos secundários não será simplesmente igual ao número médio de contatos multiplicado pela probabilidade de transmissão por contato. Isso ocorre porque a quantidade média de transmissão em cada geração de infecção não depende apenas de com quem um grupo entrou em contato; depende de com quem <em>os contatos desse grupo</em> subsequentemente entram em contato.</p>
+<p>A função <code>r_eff()</code> do pacote <code>{finalsize}</code> pode realizar essa conversão, recebendo uma matriz de contato, a demografia e a proporção de suscetíveis, e convertendo-as em uma estimativa do número médio de casos secundários gerados por um indivíduo infeccioso típico (ou seja, o número efetivo de reprodução).</p>
+</section>
+<section id="converter-a-matriz-de-contato-em-taxas-de-contato" class="level3">
+<h3 class="anchored" data-anchor-id="converter-a-matriz-de-contato-em-taxas-de-contato">2. Converter a matriz de contato em taxas de contato</h3>
+<p>Enquanto uma matriz de contato fornece o número médio de contatos que um grupo faz com outro, a dinâmica epidêmica em diferentes grupos depende da taxa com que um grupo infecta o outro. Portanto, precisamos escalonar a taxa de interação entre diferentes grupos (ou seja, o número de contatos por unidade de tempo) para obter a taxa de transmissão.</p>
+<p>Contudo, precisamos ter cuidado para definir corretamente em qualquer modelo a transmissão de e para cada grupo. Especificamente, o elemento <span class="math inline">\((i,j)\)</span> na matriz de contato de um modelo matemático representa os contatos do grupo <span class="math inline">\(i\)</span> com o grupo <span class="math inline">\(j\)</span>. Mas se quisermos saber a taxa com que o grupo <span class="math inline">\(i\)</span> está sendo infectado, precisamos multiplicar o número de contatos de suscetíveis do grupo <span class="math inline">\(i\)</span> (<span class="math inline">\(S_i\)</span>) com o grupo <span class="math inline">\(j\)</span> (<span class="math inline">\(C[i,j]\)</span>) pela proporção desses contatos que são infecciosos (<span class="math inline">\(I_j/N_j\)</span>) e pelo risco de transmissão por contato (<span class="math inline">\(\beta\)</span>).</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Por que transpormos a matriz de contato para obter taxas de contato
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Relembre em <strong>Uma nota sobre notação</strong>, acima, que o elemento <span class="math inline">\(C[i,j]\)</span> da matriz gerada por <code>socialmixr::contact_matrix()</code> é lido sob a perspectiva do participante: o número médio de contatos que um participante do grupo <span class="math inline">\(i\)</span> relata ter com pessoas do grupo <span class="math inline">\(j\)</span>.</p>
+<p>Para converter isso em uma <em>taxa</em> de contato, lemos a matriz no sentido inverso: “suscetíveis no grupo <span class="math inline">\(i\)</span> (<span class="math inline">\(S_i\)</span>), <em>contatados pelo</em> grupo <span class="math inline">\(j\)</span>”. Trata-se do mesmo contato visto sob a perspectiva do suscetível, em vez da perspectiva de quem relata — o grupo <span class="math inline">\(j\)</span> está fazendo o contato, e o grupo <span class="math inline">\(i\)</span> está sendo exposto. Em outras palavras, o elemento que precisamos na posição <span class="math inline">\((i,j)\)</span> é o contato relatado na posição <span class="math inline">\((j,i)\)</span> do <code>socialmixr</code>: as duas convenções são transpostas uma da outra.</p>
+<p>Passar de uma convenção para outra significa transpor a matriz. Alguns pacotes esperam que você faça isso manualmente; o <code>{epidemics}</code> faz isso por você.</p>
+<p>A partir da versão 0.5.0, as funções de modelo do <code>{epidemics}</code> transpõem a matriz de contato internamente; portanto, uma matriz de <code>socialmixr::contact_matrix()</code> deve ser passada para <code>epidemics::population()</code> exatamente como é retornada, sem nenhuma chamada a <code>t()</code>:</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>contacts_byage_matrix <span class="ot">&lt;-</span> contacts_byage<span class="sc">$</span>matrix</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Internamente, é a matriz transposta que é usada como <span class="math inline">\(C_{i,j}\)</span> em <span class="math inline">\(\beta S_i \sum_j C_{i,j} I_j/N_j\)</span> abaixo.</p>
+</div>
+</div>
+</section>
+<section id="em-modelos-matemáticos" class="level3">
+<h3 class="anchored" data-anchor-id="em-modelos-matemáticos">Em modelos matemáticos</h3>
+<p>Considere o modelo SIR em que os indivíduos são categorizados como suscetíveis <span class="math inline">\(S\)</span>, infectados <span class="math inline">\(I\)</span> ou recuperados <span class="math inline">\(R\)</span>. O esquema abaixo mostra os processos que descrevem o fluxo de indivíduos entre os estados de doença <span class="math inline">\(S\)</span>, <span class="math inline">\(I\)</span> e <span class="math inline">\(R\)</span> e os parâmetros fundamentais de cada processo.</p>
+<pre class="mermaid"><code>flowchart LR
+    accTitle: SIR compartmental model
+    accDescr: Three compartments: S (Susceptible), I (Infectious), R (Recovered). Transitions: S to I by infection at transmission rate beta; I to R by recovery at rate gamma.
+    S --&gt;|"infecção&lt;br&gt;(taxa de transmissão &amp;beta;)"| I
+    I --&gt;|"recuperação&lt;br&gt;(taxa de recuperação &amp;gamma;)"| R</code></pre>
+<p>As <a href="../glossario.html#ordinary">equações diferenciais</a> abaixo descrevem como os indivíduos passam de um estado para outro <a href="https://doi.org/10.1038/s41592-020-0822-z">(Bjørnstad et al.&nbsp;2020)</a>.</p>
+<p><span class="math display">\[
+\begin{aligned}
+\frac{dS}{dt} &amp; = - \beta S I /N \\
+\frac{dI}{dt} &amp;= \beta S I /N - \gamma I \\
+\frac{dR}{dt} &amp;=\gamma I \\
+\end{aligned}
+\]</span></p>
+<p>Para adicionar estrutura etária ao nosso modelo, precisamos acrescentar equações adicionais para os estados de infecção <span class="math inline">\(S\)</span>, <span class="math inline">\(I\)</span> e <span class="math inline">\(R\)</span> para cada faixa etária <span class="math inline">\(i\)</span>. Se quisermos assumir que há heterogeneidade nos contatos entre as faixas etárias, devemos adaptar o termo de transmissão <span class="math inline">\(\beta SI\)</span> para incluir a matriz de contato <span class="math inline">\(C\)</span> da seguinte forma:</p>
+<p><span class="math display">\[ \beta S_i \sum_j C_{i,j} I_j/N_j. \]</span></p>
+<p>Indivíduos suscetíveis na faixa etária <span class="math inline">\(i\)</span> tornam-se infectados em função da sua taxa de contato com indivíduos de cada faixa etária. Para cada estado de doença (<span class="math inline">\(S\)</span>, <span class="math inline">\(I\)</span> e <span class="math inline">\(R\)</span>) e faixa etária (<span class="math inline">\(i\)</span>), temos uma equação diferencialdescrevendo a taxa de variação em relação ao tempo.</p>
+<p><span class="math display">\[
+\begin{aligned}
+\frac{dS_i}{dt} &amp; = - \beta S_i \sum_j C_{i,j} I_j/N_j \\
+\frac{dI_i}{dt} &amp;= \beta S_i\sum_j C_{i,j} I_j/N_j - \gamma I_i \\
+\frac{dR_i}{dt} &amp;=\gamma I_i \\
+\end{aligned}
+\]</span></p>
+</section>
+</section>
+<section id="resumo" class="level2">
+<h2 class="anchored" data-anchor-id="resumo">Resumo</h2>
+<p>Neste tutorial, você aprendeu a definição de matriz de contato, como elas são estimadas e como acessar dados de contatos sociais usando <code>{contactsurveys}</code> e <code>{socialmixr}</code>. No próximo tutorial, você vai aprender como usar o pacote R <code>{epidemics}</code> para gerar trajetórias de doenças a partir de modelos matemáticos, com matrizes de contato usando o <code>socialmixr</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Pontos-chave">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Pontos-chave
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>As matrizes de contato quantificam os padrões de mistura entre diferentes grupos populacionais</li>
+<li>O <code>socialmixr</code> fornece ferramentas para estimar matrizes de contato a partir de dados de inquéritos</li>
+<li>As matrizes de contato podem ser usadas em diversas análises epidemiológicas, desde o cálculo de <span class="math inline">\(R_0\)</span> até a modelagem de intervenções</li>
+</ul>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../setup.html" class="pagination-link" aria-label="Configuração">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">Configuração</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../episodios/02-simular-transmissao.html" class="pagination-link" aria-label="Simular a transmissão">
+        <span class="nav-page-text"><span class="chapter-title">Simular a transmissão</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Baseado em Epiverse-TRACE <em>Tutorials Late</em> (CC-BY 4.0)</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/MVMLima/tutorials-late-pt/edit/main/episodios/01-matrizes-de-contato.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/MVMLima/tutorials-late-pt/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Adaptação PT-BR: Marcos V. M. de Lima</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

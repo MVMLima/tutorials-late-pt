@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Apêndice C — Notas para quem conduz a oficina – Modelagem de cenários para análise de surtos com R</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+</style>
+
+
+<script src="site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="site_libs/quarto-nav/headroom.min.js"></script>
+<script src="site_libs/clipboard/clipboard.min.js"></script>
+<script src="site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="site_libs/quarto-search/fuse.min.js"></script>
+<script src="site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="./">
+<link href="./licenca.html" rel="next">
+<link href="./glossario.html" rel="prev">
+<link href="./img/pkgs-hexlogos.png" rel="icon" type="image/png">
+<script src="site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="site_libs/quarto-html/popper.min.js"></script>
+<script src="site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="site_libs/quarto-html/anchor.min.js"></script>
+<link href="site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="site_libs/bootstrap/bootstrap-4f8723c4e91b4923163491bd987d7814.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="styles.css">
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./perfis.html">Apêndices</a></li><li class="breadcrumb-item"><a href="./instrutor.html"><span class="chapter-title">Notas para quem conduz a oficina</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="./">Modelagem de cenários para análise de surtos com R</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/MVMLima/tutorials-late-pt" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <div class="dropdown">
+      <a href="" title="Compartilhar" id="quarto-navigation-tool-dropdown-0" class="quarto-navigation-tool dropdown-toggle px-1" data-bs-toggle="dropdown" aria-expanded="false" role="link" aria-label="Compartilhar"><i class="bi bi-share"></i></a>
+      <ul class="dropdown-menu" aria-labelledby="quarto-navigation-tool-dropdown-0">
+          <li>
+            <a class="dropdown-item sidebar-tools-main-item" href="https://twitter.com/intent/tweet?url=|url|">
+              <i class="bi bi-twitter pe-1"></i>
+            Twitter
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item sidebar-tools-main-item" href="https://www.linkedin.com/sharing/share-offsite/?url=|url|">
+              <i class="bi bi-linkedin pe-1"></i>
+            LinkedIn
+            </a>
+          </li>
+      </ul>
+    </div>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Modelagem de cenários para análise de surtos com R</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./setup.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Configuração</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./episodios/01-matrizes-de-contato.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Matrizes de contato</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./episodios/02-simular-transmissao.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Simular a transmissão</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./episodios/03-escolher-modelo.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Escolher um modelo adequado</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./episodios/04-modelar-intervencoes.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Modelar intervenções</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./episodios/05-comparar-intervencoes.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Comparar desfechos de saúde pública das intervenções</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./episodios/06-comparar-vacinacao.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Comparar estratégias de vacinação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./episodios/07-carga-de-doenca.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Modelar a carga de doença</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./perfis.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Para quem são estes tutoriais</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./glossario.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Glossário de termos: Epiverse-TRACE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./instrutor.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Notas para quem conduz a oficina</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="./licenca.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Licença e créditos</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Nesta página</h2>
+   
+  <ul>
+  <li><a href="#tempos-sugeridos" id="toc-tempos-sugeridos" class="nav-link active" data-scroll-target="#tempos-sugeridos">Tempos sugeridos</a></li>
+  <li><a href="#pré-requisitos-dos-participantes" id="toc-pré-requisitos-dos-participantes" class="nav-link" data-scroll-target="#pré-requisitos-dos-participantes">Pré-requisitos dos participantes</a></li>
+  <li><a href="#antes-da-oficina-checklist-de-preparação" id="toc-antes-da-oficina-checklist-de-preparação" class="nav-link" data-scroll-target="#antes-da-oficina-checklist-de-preparação">Antes da oficina: checklist de preparação</a></li>
+  <li><a href="#como-conduzir-cada-episódio" id="toc-como-conduzir-cada-episódio" class="nav-link" data-scroll-target="#como-conduzir-cada-episódio">Como conduzir cada episódio</a>
+  <ul class="collapse">
+  <li><a href="#matrizes-de-contato" id="toc-matrizes-de-contato" class="nav-link" data-scroll-target="#matrizes-de-contato">1. Matrizes de contato</a></li>
+  <li><a href="#simular-a-transmissão" id="toc-simular-a-transmissão" class="nav-link" data-scroll-target="#simular-a-transmissão">2. Simular a transmissão</a></li>
+  <li><a href="#escolher-um-modelo-adequado" id="toc-escolher-um-modelo-adequado" class="nav-link" data-scroll-target="#escolher-um-modelo-adequado">3. Escolher um modelo adequado</a></li>
+  <li><a href="#modelar-intervenções" id="toc-modelar-intervenções" class="nav-link" data-scroll-target="#modelar-intervenções">4. Modelar intervenções</a></li>
+  <li><a href="#comparar-desfechos-das-intervenções" id="toc-comparar-desfechos-das-intervenções" class="nav-link" data-scroll-target="#comparar-desfechos-das-intervenções">5. Comparar desfechos das intervenções</a></li>
+  <li><a href="#comparar-estratégias-de-vacinação" id="toc-comparar-estratégias-de-vacinação" class="nav-link" data-scroll-target="#comparar-estratégias-de-vacinação">6. Comparar estratégias de vacinação</a></li>
+  <li><a href="#modelar-a-carga-de-doença" id="toc-modelar-a-carga-de-doença" class="nav-link" data-scroll-target="#modelar-a-carga-de-doença">7. Modelar a carga de doença</a></li>
+  </ul></li>
+  <li><a href="#onde-as-turmas-costumam-travar" id="toc-onde-as-turmas-costumam-travar" class="nav-link" data-scroll-target="#onde-as-turmas-costumam-travar">Onde as turmas costumam travar</a></li>
+  <li><a href="#adaptando-para-os-seus-dados" id="toc-adaptando-para-os-seus-dados" class="nav-link" data-scroll-target="#adaptando-para-os-seus-dados">Adaptando para os seus dados</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/MVMLima/tutorials-late-pt/edit/main/instrutor.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/MVMLima/tutorials-late-pt/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default"><nav class="quarto-page-breadcrumbs quarto-title-breadcrumbs d-none d-lg-block" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="./perfis.html">Apêndices</a></li><li class="breadcrumb-item"><a href="./instrutor.html"><span class="chapter-title">Notas para quem conduz a oficina</span></a></li></ol></nav>
+<div class="quarto-title">
+<h1 class="title">Apêndice C — Notas para quem conduz a oficina</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<p>Este guia é para quem vai <strong>ministrar</strong> a oficina. Ele não substitui os episódios: traz os tempos, o que demonstrar, o que deixar para os participantes fazerem e onde as turmas costumam travar.</p>
+<section id="tempos-sugeridos" class="level2">
+<h2 class="anchored" data-anchor-id="tempos-sugeridos">Tempos sugeridos</h2>
+<p>Os tempos vêm do cabeçalho de cada episódio do material original:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th>Episódio</th>
+<th>Ensino</th>
+<th>Exercícios</th>
+<th>Total</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1. Matrizes de contato</td>
+<td>40 min</td>
+<td>10 min</td>
+<td>50 min</td>
+</tr>
+<tr class="even">
+<td>2. Simular a transmissão</td>
+<td>45 min</td>
+<td>30 min</td>
+<td>75 min</td>
+</tr>
+<tr class="odd">
+<td>3. Escolher um modelo adequado</td>
+<td>10 min</td>
+<td>20 min</td>
+<td>30 min</td>
+</tr>
+<tr class="even">
+<td>4. Modelar intervenções</td>
+<td>45 min</td>
+<td>30 min</td>
+<td>75 min</td>
+</tr>
+<tr class="odd">
+<td>5. Comparar desfechos das intervenções</td>
+<td>45 min</td>
+<td>30 min</td>
+<td>75 min</td>
+</tr>
+<tr class="even">
+<td>6. Comparar estratégias de vacinação</td>
+<td>50 min</td>
+<td>20 min</td>
+<td>70 min</td>
+</tr>
+<tr class="odd">
+<td>7. Modelar a carga de doença</td>
+<td>40 min</td>
+<td>10 min</td>
+<td>50 min</td>
+</tr>
+<tr class="even">
+<td><strong>Total</strong></td>
+<td><strong>275 min</strong></td>
+<td><strong>150 min</strong></td>
+<td><strong>425 min = 7h05</strong></td>
+</tr>
+</tbody>
+</table>
+<p>São <strong>mais de sete horas</strong> de conteúdo: não cabe em um dia só com intervalo. Duas opções que funcionam: dois dias (episódios 1–3 e 4–7) ou um dia único com os episódios 1, 2, 5 e 7 e o resto como leitura.</p>
+<div class="callout callout-style-default callout-important callout-titled" title="Rede é pré-requisito, não detalhe">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>Rede é pré-requisito, não detalhe
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Quase todos os episódios baixam dados durante a execução: os inquéritos de contato vêm do Zenodo (via <code>{contactsurveys}</code>) e a demografia vem do <code>{wpp2024}</code>. Teste o download na rede do local antes da oficina — em rede com proxy ou bloqueio, o episódio para na primeira célula e a aula inteira trava.</p>
+</div>
+</div>
+</section>
+<section id="pré-requisitos-dos-participantes" class="level2">
+<h2 class="anchored" data-anchor-id="pré-requisitos-dos-participantes">Pré-requisitos dos participantes</h2>
+<ul>
+<li>R intermediário: ler dados, transformar, reorganizar e fazer gráficos.</li>
+<li>Familiaridade com <code>{dplyr}</code>, <code>{tidyr}</code> e <code>{ggplot2}</code>, e uso do pipe (<code>%&gt;%</code> ou <code>|&gt;</code>).</li>
+<li>Teoria de epidemias em nível básico: parâmetros epidemiológicos, períodos da doença e a ideia de modelo compartimental (S, E, I, R).</li>
+<li>As etapas anteriores da trilha (<em>Tutorials Early</em> e <em>Middle</em>) ajudam, mas nada aqui depende do código delas.</li>
+</ul>
+</section>
+<section id="antes-da-oficina-checklist-de-preparação" class="level2">
+<h2 class="anchored" data-anchor-id="antes-da-oficina-checklist-de-preparação">Antes da oficina: checklist de preparação</h2>
+<ol type="1">
+<li><strong>Instale os pacotes antes e teste o carregamento.</strong> No Linux, o <code>{epidemics}</code> não está no CRAN — a instalação vem do repositório do Epiverse; e o <code>{wpp2024}</code> vem do GitHub (<code>PPgp/wpp2024</code>), não do CRAN. A página de <a href="./setup.html">Setup</a> traz os dois caminhos.</li>
+<li><strong>Confirme o download dos dados</strong>: uma chamada a <code>contactsurveys::download_survey()</code> e um <code>socialmixr::contact_matrix()</code> já provam que a rede e os pacotes estão funcionando.</li>
+<li><strong>Conferência do ambiente usado nesta adaptação</strong> (20/09/2026): R 4.6.1, Quarto 1.8.27, <code>{epidemics}</code> 0.5.0, <code>{contactsurveys}</code> 0.2.0, <code>{socialmixr}</code> 0.7.0, <code>{wpp2024}</code> 1.1.3. Versões diferentes das do material podem mudar argumentos de função — vale rodar um episódio inteiro antes.</li>
+<li><strong>Projetor</strong>: os gráficos deste curso têm eixos e legendas longas. Aumente o zoom do editor e do console antes de começar.</li>
+<li><strong>Combine uma pasta de trabalho única.</strong> O curso não lê arquivos do disco (os dados vêm pela rede), mas os objetos criados em um episódio são usados no seguinte — quem começa do meio precisa rodar as células anteriores.</li>
+</ol>
+</section>
+<section id="como-conduzir-cada-episódio" class="level2">
+<h2 class="anchored" data-anchor-id="como-conduzir-cada-episódio">Como conduzir cada episódio</h2>
+<section id="matrizes-de-contato" class="level3">
+<h3 class="anchored" data-anchor-id="matrizes-de-contato">1. Matrizes de contato</h3>
+<p>O episódio monta a matriz de contato do Reino Unido a partir do inquérito POLYMOD e mostra como ela alimenta <span class="math inline">\(R_0\)</span>, taxas de contato e modelos estruturados por idade.</p>
+<p>O que demonstrar: a inspeção de países disponíveis com <code>socialmixr::load_survey()</code> e o argumento <code>survey_pop</code> — é ali que se percebe que a matriz <strong>depende de uma estrutura populacional externa</strong>. Sem esse argumento, a função não roda.</p>
+<p>O que deixar para os participantes fazerem: o desafio que troca o país do inquérito (a Zâmbia aparece no material) e a leitura da matriz simétrica.</p>
+<p>Ponto de atenção: a seção de matrizes sintéticas é o gancho para a realidade brasileira — não há inquérito de contato brasileiro na coleção consultada (ver caixa no episódio).</p>
+</section>
+<section id="simular-a-transmissão" class="level3">
+<h3 class="anchored" data-anchor-id="simular-a-transmissão">2. Simular a transmissão</h3>
+<p>Episódio central do curso: montar o modelo (matriz de contato, condições iniciais, estrutura populacional, parâmetros) e rodar a simulação com <code>epidemics::model_default()</code>.</p>
+<p>O que demonstrar: a diferença entre <strong>parâmetro de taxa</strong> e <strong>duração</strong> (o modelo usa taxas <span class="math inline">\(1/x\)</span>), e a comparação entre a carga total (<code>infectious</code>) e a incidência diária (<code>epidemics::new_infections()</code>).</p>
+<p>O que deixar para os participantes fazerem: os dois desafios, que mexem em valores de <span class="math inline">\(R_0\)</span> e nas condições iniciais.</p>
+<p>Ponto de atenção: o material original tem uma inconsistência de texto — em um trecho o texto diz <span class="math inline">\(R_0 = 1.5\)</span> e a simulação anterior usa 1.46. Mantivemos como está no original (registrado em <a href="./licenca.html">Licença e créditos</a>).</p>
+</section>
+<section id="escolher-um-modelo-adequado" class="level3">
+<h3 class="anchored" data-anchor-id="escolher-um-modelo-adequado">3. Escolher um modelo adequado</h3>
+<p>Episódio conceitual, quase sem código (10 min de ensino). Serve para decidir <em>se</em> e <em>qual</em> modelo usar, antes de sair rodando.</p>
+<p>O que demonstrar: as perguntas-guia do episódio (determinístico ou estocástico? qual o desfecho de interesse? como a transmissão é formulada? haverá intervenção?) e a tabela de modelos disponíveis no <code>{epidemics}</code>.</p>
+<p>O que deixar para os participantes fazerem: o desafio do surto de Ebola, que exige escolher o modelo e justificar.</p>
+</section>
+<section id="modelar-intervenções" class="level3">
+<h3 class="anchored" data-anchor-id="modelar-intervenções">4. Modelar intervenções</h3>
+<p>Aqui as intervenções entram no modelo de duas formas distintas: reduzindo a <strong>taxa de contato</strong> (fechamento de escolas, distanciamento) ou reduzindo a <strong>taxa de transmissão</strong> (máscaras).</p>
+<p>O que demonstrar: <code>epidemics::intervention()</code> com seus argumentos e o efeito de uma intervenção que começa em um dia e dura um período definido. Vale rodar com e sem intervenção na mesma projeção.</p>
+<p>Ponto de atenção: é o episódio mais longo de código contínuo. Se o tempo estiver curto, demonstre um tipo de intervenção e deixe os outros como exercício.</p>
+</section>
+<section id="comparar-desfechos-das-intervenções" class="level3">
+<h3 class="anchored" data-anchor-id="comparar-desfechos-das-intervenções">5. Comparar desfechos das intervenções</h3>
+<p>O conceito central é o <strong>cenário de base (contrafactual)</strong>: sem ele, “reduziu 30%” não significa nada.</p>
+<p>O que demonstrar: <code>epidemics::outcomes_averted()</code>, que transforma duas trajetórias em um número comparável, e o modelo Vacamole (COVID-19 com hospitalização e morte) como exemplo de modelo com desfechos graves.</p>
+<p>O que deixar para os participantes fazerem: o desafio do Ebola, que repete o fluxo com outro patógeno.</p>
+</section>
+<section id="comparar-estratégias-de-vacinação" class="level3">
+<h3 class="anchored" data-anchor-id="comparar-estratégias-de-vacinação">6. Comparar estratégias de vacinação</h3>
+<p>O episódio mais denso do curso: efeitos diretos e indiretos, limiar de imunidade de rebanho, priorização por idade, risco de morte por faixa etária e a interação entre vacinação e NPIs.</p>
+<p>O que demonstrar: o gráfico que compara estratégias de direcionamento — a conclusão contra-intuitiva (priorizar quem mais morre nem sempre é o que mais reduz mortes) é o ponto alto da oficina.</p>
+<p>O que deixar para os participantes fazerem: o desafio sobre suspender a NPI em momentos diferentes.</p>
+<p>Ponto de atenção: são dezoito execuções do modelo no mesmo episódio. Rode uma vez antes para saber quanto tempo leva na máquina da sala e avise a turma.</p>
+</section>
+<section id="modelar-a-carga-de-doença" class="level3">
+<h3 class="anchored" data-anchor-id="modelar-a-carga-de-doença">7. Modelar a carga de doença</h3>
+<p>Fecha o curso convertendo a saída do modelo em demanda por serviços de saúde, com <strong>convolução</strong>: a trajetória de infecções passa pelas distribuições de tempo até internação, permanência e alta.</p>
+<p>O que demonstrar: o desenho do modelo de carga (o esquema do episódio) antes de mostrar o código — aqui a dificuldade é conceitual, não de R.</p>
+<p>Ponto de atenção: é o episódio que mais depende de dados locais (tempo de internação, letalidade). Se a turma for da vigilância, vale discutir quais desses parâmetros existem no serviço deles.</p>
+</section>
+</section>
+<section id="onde-as-turmas-costumam-travar" class="level2">
+<h2 class="anchored" data-anchor-id="onde-as-turmas-costumam-travar">Onde as turmas costumam travar</h2>
+<ul>
+<li><strong>Instalação de pacotes</strong>: <code>{epidemics}</code> fora do CRAN e <code>{wpp2024}</code> no GitHub. É o gargalo número um em sala; resolva antes, não durante.</li>
+<li><strong>Rede</strong>: download de inquéritos e de dados demográficos. Sem internet, boa parte do curso não roda (ver caixa no início desta página).</li>
+<li><strong>Estrutura populacional no <code>socialmixr</code></strong>: o argumento <code>survey_pop</code> exige uma tabela de duas colunas (<code>lower.age.limit</code> e <code>population</code>). Passar o objeto do <code>{wpp2024}</code> direto, sem o <code>filter</code>/<code>select</code>/<code>mutate</code> do exemplo, dá erro de colunas inconsistentes.</li>
+<li><strong>Memória</strong>: <code>data(popAge1dt, package = "wpp2024")</code> carrega uma tabela longa com milhões de linhas. Em máquina com pouca memória, o R fica lento a partir daí.</li>
+<li><strong>Versão dos pacotes</strong>: o curso tem trechos escritos para versões específicas do <code>{epidemics}</code>. Se a turma copiar código de outros tutoriais, funções podem ter mudado de nome.</li>
+<li><strong>Achar que o modelo travou</strong>: não há MCMC neste curso — os modelos do <code>{epidemics}</code> são equações diferenciais resolvidas direto, sem ajuste bayesiano. Ainda assim, o episódio 6 roda dezoito simulações e leva quase um minuto: medido nesta adaptação, <strong>47 segundos</strong> só para renderizar esse episódio. A barra de progresso para por alguns segundos e dá a impressão de travamento.</li>
+</ul>
+</section>
+<section id="adaptando-para-os-seus-dados" class="level2">
+<h2 class="anchored" data-anchor-id="adaptando-para-os-seus-dados">Adaptando para os seus dados</h2>
+<p>O curso trabalha com o Reino Unido (inquéritos POLYMOD e de outros países) e com a demografia da ONU. Para trazer a realidade local:</p>
+<ul>
+<li><strong>População por faixa etária</strong>: no Brasil, Censo, estimativas e projeções do IBGE, publicadas pelo DATASUS — há pacote R que baixa esses microdados direto.</li>
+<li><strong>Matriz de contato</strong>: não há inquérito brasileiro na coleção consultada. Use uma matriz sintética ou adaptada e <strong>registre a escolha</strong> junto com a análise, porque ela muda o resultado.</li>
+<li><strong>Cenários</strong>: as medidas não farmacológicas no Brasil foram decididas por estados e municípios, com conteúdo e momento heterogêneos — trate o cenário como conjunto de hipóteses, não como um parâmetro conhecido.</li>
+</ul>
+<p>Antes de usar base real, verifique a política de uso dos dados no seu serviço e trabalhe sempre que possível com <strong>dados agregados ou anonimizados</strong>. Dados de saúde são dados pessoais sensíveis, e o compartilhamento em sala de aula precisa seguir a LGPD e as regras da instituição.</p>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="./glossario.html" class="pagination-link" aria-label="Glossário de termos: Epiverse-TRACE">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">Glossário de termos: Epiverse-TRACE</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="./licenca.html" class="pagination-link" aria-label="Licença e créditos">
+        <span class="nav-page-text"><span class="chapter-title">Licença e créditos</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Baseado em Epiverse-TRACE <em>Tutorials Late</em> (CC-BY 4.0)</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/MVMLima/tutorials-late-pt/edit/main/instrutor.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/MVMLima/tutorials-late-pt/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Adaptação PT-BR: Marcos V. M. de Lima</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>

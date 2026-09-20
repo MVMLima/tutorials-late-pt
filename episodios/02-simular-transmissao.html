@@ -1,0 +1,1566 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="pt-BR" xml:lang="pt-BR"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.8.27">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+
+<title>Simular a transmissão – Modelagem de cenários para análise de surtos com R</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="../site_libs/quarto-nav/quarto-nav.js"></script>
+<script src="../site_libs/quarto-nav/headroom.min.js"></script>
+<script src="../site_libs/clipboard/clipboard.min.js"></script>
+<script src="../site_libs/quarto-search/autocomplete.umd.js"></script>
+<script src="../site_libs/quarto-search/fuse.min.js"></script>
+<script src="../site_libs/quarto-search/quarto-search.js"></script>
+<meta name="quarto:offset" content="../">
+<link href="../episodios/03-escolher-modelo.html" rel="next">
+<link href="../episodios/01-matrizes-de-contato.html" rel="prev">
+<link href="../img/pkgs-hexlogos.png" rel="icon" type="image/png">
+<script src="../site_libs/quarto-html/quarto.js" type="module"></script>
+<script src="../site_libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="../site_libs/quarto-html/axe/axe-check.js" type="module"></script>
+<script src="../site_libs/quarto-html/popper.min.js"></script>
+<script src="../site_libs/quarto-html/tippy.umd.min.js"></script>
+<script src="../site_libs/quarto-html/anchor.min.js"></script>
+<link href="../site_libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="../site_libs/quarto-html/quarto-syntax-highlighting-8b4baf804e461d9b72633f0de59a0cac.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="../site_libs/bootstrap/bootstrap.min.js"></script>
+<link href="../site_libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="../site_libs/bootstrap/bootstrap-4f8723c4e91b4923163491bd987d7814.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script id="quarto-search-options" type="application/json">{
+  "location": "sidebar",
+  "copy-button": false,
+  "collapse-after": 3,
+  "panel-placement": "start",
+  "type": "textbox",
+  "limit": 50,
+  "keyboard-shortcut": [
+    "f",
+    "/",
+    "s"
+  ],
+  "show-item-context": false,
+  "language": {
+    "search-no-results-text": "Nenhum resultado",
+    "search-matching-documents-text": "documentos correspondentes",
+    "search-copy-link-title": "Copiar link para a busca",
+    "search-hide-matches-text": "Esconder correspondências adicionais",
+    "search-more-match-text": "mais correspondência neste documento",
+    "search-more-matches-text": "mais correspondências neste documento",
+    "search-clear-button-title": "Limpar",
+    "search-text-placeholder": "",
+    "search-detached-cancel-button-title": "Cancelar",
+    "search-submit-button-title": "Enviar",
+    "search-label": "Procurar"
+  }
+}</script>
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+<link rel="stylesheet" href="../styles.css">
+</head>
+
+<body class="nav-sidebar docked quarto-light">
+
+<div id="quarto-search-results"></div>
+  <header id="quarto-header" class="headroom fixed-top">
+  <nav class="quarto-secondary-nav">
+    <div class="container-fluid d-flex">
+      <button type="button" class="quarto-btn-toggle btn" data-bs-toggle="collapse" role="button" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">
+        <i class="bi bi-layout-text-sidebar-reverse"></i>
+      </button>
+        <nav class="quarto-page-breadcrumbs" aria-label="breadcrumb"><ol class="breadcrumb"><li class="breadcrumb-item"><a href="../episodios/02-simular-transmissao.html"><span class="chapter-title">Simular a transmissão</span></a></li></ol></nav>
+        <a class="flex-grow-1" role="navigation" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item" aria-controls="quarto-sidebar" aria-expanded="false" aria-label="Alternar barra lateral" onclick="if (window.quartoToggleHeadroom) { window.quartoToggleHeadroom(); }">      
+        </a>
+      <button type="button" class="btn quarto-search-button" aria-label="Procurar" onclick="window.quartoOpenSearch();">
+        <i class="bi bi-search"></i>
+      </button>
+    </div>
+  </nav>
+</header>
+<!-- content -->
+<div id="quarto-content" class="quarto-container page-columns page-rows-contents page-layout-article">
+<!-- sidebar -->
+  <nav id="quarto-sidebar" class="sidebar collapse collapse-horizontal quarto-sidebar-collapse-item sidebar-navigation docked overflow-auto">
+    <div class="pt-lg-2 mt-2 text-left sidebar-header">
+    <div class="sidebar-title mb-0 py-0">
+      <a href="../">Modelagem de cenários para análise de surtos com R</a> 
+        <div class="sidebar-tools-main">
+    <a href="https://github.com/MVMLima/tutorials-late-pt" title="Código fonte" class="quarto-navigation-tool px-1" aria-label="Código fonte"><i class="bi bi-github"></i></a>
+    <div class="dropdown">
+      <a href="" title="Compartilhar" id="quarto-navigation-tool-dropdown-0" class="quarto-navigation-tool dropdown-toggle px-1" data-bs-toggle="dropdown" aria-expanded="false" role="link" aria-label="Compartilhar"><i class="bi bi-share"></i></a>
+      <ul class="dropdown-menu" aria-labelledby="quarto-navigation-tool-dropdown-0">
+          <li>
+            <a class="dropdown-item sidebar-tools-main-item" href="https://twitter.com/intent/tweet?url=|url|">
+              <i class="bi bi-twitter pe-1"></i>
+            Twitter
+            </a>
+          </li>
+          <li>
+            <a class="dropdown-item sidebar-tools-main-item" href="https://www.linkedin.com/sharing/share-offsite/?url=|url|">
+              <i class="bi bi-linkedin pe-1"></i>
+            LinkedIn
+            </a>
+          </li>
+      </ul>
+    </div>
+</div>
+    </div>
+      </div>
+        <div class="mt-2 flex-shrink-0 align-items-center">
+        <div class="sidebar-search">
+        <div id="quarto-search" class="" title="Procurar"></div>
+        </div>
+        </div>
+    <div class="sidebar-menu-container"> 
+    <ul class="list-unstyled mt-1">
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../index.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Modelagem de cenários para análise de surtos com R</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../setup.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Configuração</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/01-matrizes-de-contato.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Matrizes de contato</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/02-simular-transmissao.html" class="sidebar-item-text sidebar-link active"><span class="chapter-title">Simular a transmissão</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/03-escolher-modelo.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Escolher um modelo adequado</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/04-modelar-intervencoes.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Modelar intervenções</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/05-comparar-intervencoes.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Comparar desfechos de saúde pública das intervenções</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/06-comparar-vacinacao.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Comparar estratégias de vacinação</span></a>
+  </div>
+</li>
+        <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../episodios/07-carga-de-doenca.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Modelar a carga de doença</span></a>
+  </div>
+</li>
+        <li class="sidebar-item sidebar-item-section">
+      <div class="sidebar-item-container"> 
+            <a class="sidebar-item-text sidebar-link text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true">
+ <span class="menu-text">Apêndices</span></a>
+          <a class="sidebar-item-toggle text-start" data-bs-toggle="collapse" data-bs-target="#quarto-sidebar-section-1" role="navigation" aria-expanded="true" aria-label="Alternar seção">
+            <i class="bi bi-chevron-right ms-2"></i>
+          </a> 
+      </div>
+      <ul id="quarto-sidebar-section-1" class="collapse list-unstyled sidebar-section depth1 show">  
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../perfis.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Para quem são estes tutoriais</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../glossario.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Glossário de termos: Epiverse-TRACE</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../instrutor.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Notas para quem conduz a oficina</span></a>
+  </div>
+</li>
+          <li class="sidebar-item">
+  <div class="sidebar-item-container"> 
+  <a href="../licenca.html" class="sidebar-item-text sidebar-link"><span class="chapter-title">Licença e créditos</span></a>
+  </div>
+</li>
+      </ul>
+  </li>
+    </ul>
+    </div>
+</nav>
+<div id="quarto-sidebar-glass" class="quarto-sidebar-collapse-item" data-bs-toggle="collapse" data-bs-target=".quarto-sidebar-collapse-item"></div>
+<!-- margin-sidebar -->
+    <div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+        <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Nesta página</h2>
+   
+  <ul>
+  <li><a href="#introdução" id="toc-introdução" class="nav-link active" data-scroll-target="#introdução">Introdução</a></li>
+  <li><a href="#simular-a-propagação-da-doença" id="toc-simular-a-propagação-da-doença" class="nav-link" data-scroll-target="#simular-a-propagação-da-doença">Simular a propagação da doença</a>
+  <ul class="collapse">
+  <li><a href="#matriz-de-contato" id="toc-matriz-de-contato" class="nav-link" data-scroll-target="#matriz-de-contato">1. Matriz de contato</a></li>
+  <li><a href="#condições-iniciais" id="toc-condições-iniciais" class="nav-link" data-scroll-target="#condições-iniciais">2. Condições iniciais</a></li>
+  <li><a href="#estrutura-populacional" id="toc-estrutura-populacional" class="nav-link" data-scroll-target="#estrutura-populacional">3. Estrutura populacional</a></li>
+  <li><a href="#parâmetros-do-modelo" id="toc-parâmetros-do-modelo" class="nav-link" data-scroll-target="#parâmetros-do-modelo">4. Parâmetros do modelo</a></li>
+  </ul></li>
+  <li><a href="#executar-o-modelo" id="toc-executar-o-modelo" class="nav-link" data-scroll-target="#executar-o-modelo">Executar o modelo</a></li>
+  <li><a href="#levar-em-conta-a-incerteza" id="toc-levar-em-conta-a-incerteza" class="nav-link" data-scroll-target="#levar-em-conta-a-incerteza">Levar em conta a incerteza</a></li>
+  <li><a href="#resumo" id="toc-resumo" class="nav-link" data-scroll-target="#resumo">Resumo</a></li>
+  </ul>
+<div class="toc-actions"><ul><li><a href="https://github.com/MVMLima/tutorials-late-pt/edit/main/episodios/02-simular-transmissao.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/MVMLima/tutorials-late-pt/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></nav>
+    </div>
+<!-- main -->
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title"><span class="chapter-title">Simular a transmissão</span></h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="callout callout-style-default callout-note callout-titled" title="Perguntas">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Perguntas
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>Como simular a propagação de uma doença usando um modelo matemático?</li>
+<li>Quais entradas são necessárias para a simulação de um modelo?</li>
+<li>Como levar em conta a incerteza?</li>
+</ul>
+</div>
+</div>
+<div class="callout callout-style-default callout-tip callout-titled" title="Objetivos">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Objetivos
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>Carregar uma estrutura de modelo existente a partir do pacote R <code>{epidemics}</code></li>
+<li>Carregar uma matriz de contato social existente com o <code>{socialmixr}</code></li>
+<li>Gerar uma simulação de modelo de propagação de doença com o <code>{epidemics}</code></li>
+<li>Gerar múltiplas simulações de modelo e visualizar a incerteza</li>
+</ul>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Pré-requisitos">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>Pré-requisitos
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>Concluir o tutorial sobre <a href="../episodios/01-matrizes-de-contato.html">matrizes de contato</a>.</li>
+</ul>
+<p>Os participantes devem se familiarizar com os seguintes conceitos antes de trabalhar neste tutorial:</p>
+<p><strong>Modelagem matemática</strong>: <a href="https://doi.org/10.1038/s41592-020-0822-z">Introduction to infectious disease models</a>, <a href="../glossario.html#state">variáveis de estado</a>, <a href="../glossario.html#parsode">parâmetros do modelo</a>, <a href="../glossario.html#initial">condições iniciais</a>, <a href="../glossario.html#ordinary">equações diferenciais</a>.</p>
+<p><strong>Teoria epidêmica</strong>: <a href="https://doi.org/10.1155/2011/267049">Transmission</a>, <a href="https://doi.org/10.3201/eid2501.171901">Reproduction number</a>.</p>
+<p><strong>Pacotes R instalados</strong>: <code>{epidemics}</code>, <code>{contactsurveys}</code>, <code>{socialmixr}</code>, <code>{wpp2024}</code>, <code>{scales}</code>, <code>{tidyverse}</code>.</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Detalhes">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-4-contents" aria-controls="callout-4" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Detalhes
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-4" class="callout-4-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Instale estes pacotes se ainda não estiverem instalados (você pode configurar o espelho brasileiro do CRAN com <code>options(repos = c(CRAN = "https://cran-r.c3sl.ufpr.br/"))</code>):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span>base<span class="sc">::</span><span class="fu">require</span>(<span class="st">"pak"</span>)) <span class="fu">install.packages</span>(<span class="st">"pak"</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>pak<span class="sc">::</span><span class="fu">pak</span>(<span class="fu">c</span>(<span class="st">"epiverse-trace/epidemics"</span>, <span class="st">"PPgp/wpp2024"</span>, <span class="st">"contactsurveys"</span>, <span class="st">"socialmixr"</span>, <span class="st">"scales"</span>, <span class="st">"tidyverse"</span>))</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Se receber qualquer mensagem de erro, consulte a <a href="../setup.html#software-setup">página principal de configuração</a>.</p>
+</div>
+</div>
+</div>
+<section id="introdução" class="level2">
+<h2 class="anchored" data-anchor-id="introdução">Introdução</h2>
+<p>Modelos matemáticos são ferramentas úteis para gerar trajetórias de propagação de doenças. Neste tutorial, usaremos o pacote R <code>{epidemics}</code> para gerar trajetórias de doença para uma cepa de influenza com potencial pandêmico. Ao final deste tutorial, você será capaz de gerar a trajetória abaixo mostrando o número de indivíduos infecciosos em diferentes faixas etárias ao longo do tempo.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="No Brasil: onde esses dados existem">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>No Brasil: onde esses dados existem
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>O exemplo deste episódio usa uma cepa de influenza com potencial pandêmico. No Brasil, a vigilância de vírus respiratórios combina a <strong>rede sentinela de Síndrome Gripal (SG)</strong> com a notificação de <strong>SRAG hospitalizado no SIVEP-Gripe</strong>, cuja base é publicada aberta (<a href="https://dadosabertos.saude.gov.br/dataset/srag-2019-a-2026">Portal de Dados Abertos do SUS — SIVEP-Gripe</a>).</p>
+</div>
+</div>
+<p>Neste tutorial, vamos aprender a usar o pacote <code>{epidemics}</code> para simular trajetórias de doenças e acessar dados de contato social com o <code>{socialmixr}</code>. Usaremos <code>{dplyr}</code>, <code>{ggplot2}</code> e o pipe <code>%&gt;%</code> para conectar algumas de suas funções, portanto vamos carregar também o pacote <code>{tidyverse}</code>:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(epidemics)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(contactsurveys)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(socialmixr)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(wpp2024)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Para o instrutor">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-6-contents" aria-controls="callout-6" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>Para o instrutor
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-6" class="callout-6-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Use os slides para apresentar os tópicos de:</p>
+<ul>
+<li>Modelagem de cenários e</li>
+<li>Matriz de contato.</li>
+</ul>
+<p>Em seguida, inicie o livecoding.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="simular-a-propagação-da-doença" class="level2">
+<h2 class="anchored" data-anchor-id="simular-a-propagação-da-doença">Simular a propagação da doença</h2>
+<p>Para simular trajetórias de doenças infecciosas, devemos primeiro selecionar um modelo matemático para usar. Existe uma biblioteca de modelos para escolher no <code>{epidemics}</code>. Eles têm o prefixo <code>model_*</code> e o sufixo com o nome da infecção (por exemplo, <code>model_ebola</code> para Ebola) ou outro identificador (por exemplo, <code>model_default</code>).</p>
+<p>Neste tutorial, usaremos o modelo padrão do <code>{epidemics}</code>, chamado <code>model_default()</code>, projetado para ser um modelo estruturado por idade que categoriza os indivíduos com base em seu estado de infecção. Para cada faixa etária <span class="math inline">\(i\)</span>, os indivíduos são categorizados como suscetíveis <span class="math inline">\(S\)</span>, infectados mas ainda não infecciosos <span class="math inline">\(E\)</span>, infecciosos <span class="math inline">\(I\)</span> ou recuperados <span class="math inline">\(R\)</span>. Em seguida, precisamos definir o processo pelo qual os indivíduos fluem de um compartimento para outro. Isso pode ser feito definindo um conjunto de <a href="../glossario.html#ordinary">equações diferenciais</a> que especificam como o número de indivíduos em cada compartimento muda ao longo do tempo.</p>
+<p>O esquema abaixo mostra os processos que descrevem o fluxo de indivíduos entre os estados da doença <span class="math inline">\(S\)</span>, <span class="math inline">\(E\)</span>, <span class="math inline">\(I\)</span> e <span class="math inline">\(R\)</span> e os principais parâmetros de cada processo.</p>
+<pre class="mermaid"><code>flowchart LR
+    accTitle: Modelo compartimental SEIR
+    accDescr: Quatro compartimentos: S (Suscetível), E (Exposto), I (Infeccioso), R (Recuperado). Transições: S para E por infecção à taxa de transmissão beta; E para I por início da infecciosidade à taxa alpha; I para R por recuperação à taxa gamma.
+    S --&gt;|"infecção&lt;br&gt;(taxa de transmissão &amp;beta;)"| E
+    E --&gt;|"início da infecciosidade&lt;br&gt;(taxa de infecciosidade &amp;alpha;)"| I
+    I --&gt;|"recuperação&lt;br&gt;(taxa de recuperação &amp;gamma;)"| R</code></pre>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Parâmetros do modelo: taxas
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Em modelos populacionais definidos por equações diferenciais, os parâmetros do modelo são frequentemente (mas nem sempre) especificados como taxas. A taxa na qual um evento ocorre é o inverso do tempo médio até esse evento. Por exemplo, no modelo SEIR, a taxa de recuperação <span class="math inline">\(\gamma\)</span> é o inverso do período infeccioso médio.</p>
+<p>Os valores dessas taxas podem ser determinados a partir da história natural da doença. Por exemplo, se as pessoas são, em média, infecciosas por 8 dias, então no modelo, 1/8 das pessoas atualmente infecciosas se recuperaria a cada dia (ou seja, a taxa de recuperação, <span class="math inline">\(\gamma=1/8=0.125\)</span>).</p>
+</div>
+</div>
+<p>Para cada estado da doença (<span class="math inline">\(S\)</span>, <span class="math inline">\(E\)</span>, <span class="math inline">\(I\)</span> e <span class="math inline">\(R\)</span>) e faixa etária (<span class="math inline">\(i\)</span>), temos uma equação diferencial que descreve a taxa de variação em relação ao tempo.</p>
+<p><span class="math display">\[
+\begin{aligned}
+\frac{dS_i}{dt} &amp; = - \beta S_i \sum_j C_{i,j} I_j/N_j \\
+\frac{dE_i}{dt} &amp;= \beta S_i\sum_j C_{i,j} I_j/N_j - \alpha E_i \\
+\frac{dI_i}{dt} &amp;= \alpha E_i - \gamma I_i \\
+\frac{dR_i}{dt} &amp;=\gamma I_i \\
+\end{aligned}
+\]</span></p>
+<p>Os indivíduos na faixa etária (<span class="math inline">\(i\)</span>) passam do estado suscetível (<span class="math inline">\(S_i\)</span>) para o estado exposto (<span class="math inline">\(E_i\)</span>) por meio de contatos específicos por idade com indivíduos infecciosos de todos os grupos <span class="math inline">\(\beta S_i \sum_j C_{i,j} I_j/N_j\)</span>. A matriz de contato <span class="math inline">\(C\)</span> permite considerar a heterogeneidade nos contatos entre as faixas etárias. Em seguida, eles passam para o estado infeccioso a uma taxa <span class="math inline">\(\alpha\)</span> e se recuperam a uma taxa <span class="math inline">\(\gamma\)</span>. Observe que este modelo assume ausência de perda de imunidade (o que significa que não há fluxos de saída do estado recuperado), o que pode não ser aplicável a todas as doenças. A imunidade cai mais rapidamente em certas infecções, permitindo a reinfecção.</p>
+<p>Os parâmetros do modelo são:</p>
+<ul>
+<li>taxa de transmissão <span class="math inline">\(\beta\)</span> (derivada do número básico de reprodução <span class="math inline">\(R_0\)</span> e da taxa de recuperação <span class="math inline">\(\gamma\)</span>),</li>
+<li><a href="../glossario.html#contact">matriz de contato</a> <span class="math inline">\(C\)</span> contendo a frequência de contatos entre as faixas etárias (uma matriz quadrada <span class="math inline">\(i \times j\)</span>),</li>
+<li>taxa de infecciosidade <span class="math inline">\(\alpha\)</span> (período pré-infeccioso, ou <a href="../glossario.html#latent">período de latência</a> =<span class="math inline">\(1/\alpha\)</span>) e</li>
+<li>taxa de recuperação <span class="math inline">\(\gamma\)</span> (período infeccioso = <span class="math inline">\(1/\gamma\)</span>).</li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Exposto, infectado, infeccioso
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Às vezes ocorrem confusões ao se referir aos termos “exposto”, “infectado” e “infeccioso” na modelagem matemática. A infecção ocorre após a pessoa ter sido exposta, mas, em termos de modelagem, indivíduos “expostos” são tratados como já infectados.</p>
+<p>Usaremos as seguintes definições para nossas variáveis de estado:</p>
+<ul>
+<li><span class="math inline">\(E\)</span> = Exposto: infectado <strong>mas ainda não</strong> infeccioso,</li>
+<li><span class="math inline">\(I\)</span> = Infeccioso: infectado <strong>e</strong> infeccioso.</li>
+</ul>
+</div>
+</div>
+<p>Para gerar trajetórias usando nosso modelo, devemos preparar as seguintes entradas:</p>
+<ol type="1">
+<li>Matriz de contato</li>
+<li>Condições iniciais</li>
+<li>Estrutura populacional</li>
+<li>Parâmetros do modelo</li>
+</ol>
+<section id="matriz-de-contato" class="level3">
+<h3 class="anchored">1. Matriz de contato</h3>
+<p>Uma matriz de contato representa o número médio de contatos entre indivíduos de diferentes faixas etárias. Ela é um componente crucial em modelos estruturados por idade, pois captura como diferentes faixas etárias interagem e potencialmente transmitem infecções. Usaremos o pacote R <code>{socialmixr}</code> para carregar uma matriz de contato estimada a partir dos dados do inquérito POLYMOD <a href="https://doi.org/10.1371/journal.pmed.0050074">(Mossong et al.&nbsp;2008)</a>.</p>
+<div class="desafio callout callout-style-default callout-tip callout-titled" title="Desafio">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Desafio
+</div>
+</div>
+<section id="carregar-dados-de-contato-e-população" class="level2 callout-body-container callout-body">
+<h2 class="anchored" data-anchor-id="carregar-dados-de-contato-e-população">Carregar dados de contato e população</h2>
+<p>Usando o pacote R <code>socialmixr</code>, obtenha a matriz de contato para o Reino Unido para as faixas etárias de:</p>
+<ul>
+<li>idade entre 0 e 20 anos,</li>
+<li>idade entre 20 e 40 anos,</li>
+<li>40 anos ou mais.</li>
+</ul>
+<p>Use o inquérito POLYMOD disponível em <code>https://doi.org/10.5281/zenodo.3874557</code></p>
+<div class="callout callout-style-default callout-note callout-titled" title="Dica">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-9-contents" aria-controls="callout-9" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Dica
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-9" class="callout-9-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<ul>
+<li>Concluir o tutorial sobre <a href="../episodios/01-matrizes-de-contato.html">matrizes de contato</a>.</li>
+</ul>
+</div>
+</div>
+</div>
+<div class="solucao callout callout-style-default callout-note callout-titled" title="Solução">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-10-contents" aria-controls="callout-10" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Solução
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-10" class="callout-10-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Baixar e carregar os dados do inquérito de contato</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>survey_files <span class="ot">&lt;-</span> contactsurveys<span class="sc">::</span><span class="fu">download_survey</span>(</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">survey =</span> <span class="st">"https://doi.org/10.5281/zenodo.3874557"</span>,</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">verbose =</span> <span class="cn">FALSE</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>survey_load <span class="ot">&lt;-</span> socialmixr<span class="sc">::</span><span class="fu">load_survey</span>(<span class="at">files =</span> survey_files)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="fu">data</span>(popAge1dt, <span class="at">package =</span> <span class="st">"wpp2024"</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>uk_pop <span class="ot">&lt;-</span> popAge1dt <span class="sc">%&gt;%</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">filter</span>(name <span class="sc">==</span> <span class="st">"United Kingdom"</span>, year <span class="sc">==</span> <span class="dv">2020</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="at">lower.age.limit =</span> age, <span class="at">population =</span> pop) <span class="sc">%&gt;%</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">mutate</span>(<span class="at">population =</span> population <span class="sc">*</span> <span class="dv">1000</span>)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Gerar a matriz de contato</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>contacts_byage <span class="ot">&lt;-</span> socialmixr<span class="sc">::</span><span class="fu">contact_matrix</span>(</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">survey =</span> survey_load,</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">countries =</span> <span class="st">"United Kingdom"</span>,</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">age_limits =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">20</span>, <span class="dv">40</span>),</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">symmetric =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">survey_pop =</span> uk_pop</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Preparar a matriz de contato</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>contacts_byage_matrix <span class="ot">&lt;-</span> contacts_byage<span class="sc">$</span>matrix</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Imprimir</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>contacts_byage_matrix</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          contact.age.group
+age.group    [0,20)  [20,40) [40,Inf)
+  [0,20)   7.883663 3.114224 3.230298
+  [20,40)  2.799168 4.854839 4.873347
+  [40,Inf) 1.507146 2.529653 5.005571</code></pre>
+</div>
+</div>
+<p>Lembre-se de que a matriz satisfaz a condição <code>symmetric = TRUE</code> no nível do número total de contatos.</p>
+<p>O número total de contatos entre os grupos <span class="math inline">\(i\)</span> e <span class="math inline">\(j\)</span> é calculado como o número médio de contatos (<code>contacts_byage$matrix</code>) multiplicado pelo número de indivíduos no grupo <span class="math inline">\(i\)</span> (<code>contacts_byage$demography$population</code>)</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>contacts_byage<span class="sc">$</span>matrix <span class="sc">*</span> contacts_byage<span class="sc">$</span>demography<span class="sc">$</span>population</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>          contact.age.group
+age.group     [0,20)  [20,40)  [40,Inf)
+  [0,20)   124893484 49335724  51174588
+  [20,40)   49335724 85567212  85893423
+  [40,Inf)  51174588 85893423 169962327</code></pre>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<p>O resultado é uma matriz quadrada com linhas e colunas para cada faixa etária. As matrizes de contato podem ser carregadas de outras fontes, mas devem ser formatadas como uma matriz para serem usadas no <code>epidemics</code>.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Detalhes">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-12-contents" aria-controls="callout-12" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Detalhes
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-12" class="callout-12-contents callout-collapse collapse">
+<section id="normalização" class="level3 callout-body-container callout-body">
+<h3 class="anchored" data-anchor-id="normalização">Normalização</h3>
+<p>No <code>{epidemics}</code>, a normalização da matriz de contato ocorre dentro da chamada da função, portanto não precisamos normalizar a matriz de contato antes de passá-la para <code>epidemics::population()</code> (veja a seção 3. Estrutura populacional). Para detalhes sobre a normalização, consulte o episódio opcional sobre <a href="https://epiverse-trace.github.io/tutorials-late/learners/contact-normalization.html">Contact matrix normalization</a>.</p>
+</section>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Para o instrutor">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-13-contents" aria-controls="callout-13" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>Para o instrutor
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-13" class="callout-13-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Faça uma pausa.</p>
+<p>Use os slides para apresentar os tópicos de:</p>
+<ul>
+<li>Condições iniciais e</li>
+<li>Estrutura populacional.</li>
+</ul>
+<p>Em seguida, continue com o livecoding.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="condições-iniciais" class="level3">
+<h3 class="anchored" data-anchor-id="condições-iniciais">2. Condições iniciais</h3>
+<p>As condições iniciais são a proporção de indivíduos em cada estado da doença <span class="math inline">\(S\)</span>, <span class="math inline">\(E\)</span>, <span class="math inline">\(I\)</span> e <span class="math inline">\(R\)</span> para cada faixa etária no tempo 0. Neste exemplo, temos três faixas etárias: idade entre 0 e 20 anos, idade entre 20 e 40 anos e 40 anos ou mais. Vamos assumir que, na faixa etária mais jovem, um em cada um milhão de indivíduos é infeccioso, e as demais faixas etárias estão livres de infecção.</p>
+<p>As condições iniciais na primeira faixa etária são <span class="math inline">\(S(0)=1-\frac{1}{1,000,000}\)</span>, <span class="math inline">\(E(0) =0\)</span>, <span class="math inline">\(I(0)=\frac{1}{1,000,000}\)</span>, <span class="math inline">\(R(0)=0\)</span>. Isso é especificado como um vetor da seguinte forma:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 1 em 1.000.000 é equivalente a 1e-6</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>initial_i <span class="ot">&lt;-</span> <span class="fl">1e-6</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>initial_conditions_inf <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">S =</span> <span class="dv">1</span> <span class="sc">-</span> initial_i, <span class="at">E =</span> <span class="dv">0</span>, <span class="at">I =</span> initial_i, <span class="at">R =</span> <span class="dv">0</span>, <span class="at">V =</span> <span class="dv">0</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Observe que o R usa a notação científica com <code>e</code>, onde o <code>e</code> indica que a base deve ser multiplicada por 10 elevado à potência indicada (<a href="https://www.datakwery.com/post/2020-07-11-scientific-notation-in-r/">DataKwery, 2020</a>). A expressão <span class="math inline">\(1 \times 10^{-6}\)</span> é equivalente a <code>1e-6</code>.</p>
+<p>Para as faixas etárias livres de infecção, as condições iniciais são <span class="math inline">\(S(0)=1\)</span>, <span class="math inline">\(E(0) =0\)</span>, <span class="math inline">\(I(0)=0\)</span>, <span class="math inline">\(R(0)=0\)</span>. Especificamos isso da seguinte forma:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>initial_conditions_free <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">S =</span> <span class="dv">1</span>, <span class="at">E =</span> <span class="dv">0</span>, <span class="at">I =</span> <span class="dv">0</span>, <span class="at">R =</span> <span class="dv">0</span>, <span class="at">V =</span> <span class="dv">0</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<p>Combinamos os três vetores de condições iniciais em uma única matriz:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># combinar as condições iniciais em um objeto da classe matrix</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>initial_conditions <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  initial_conditions_inf, <span class="co"># faixa etária [0,20) (único grupo com infecciosos)</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  initial_conditions_free, <span class="co"># faixa etária [20, 40)</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  initial_conditions_free <span class="co"># faixa etária 40+</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co"># usar a matriz de contato para atribuir os nomes das faixas etárias</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(initial_conditions) <span class="ot">&lt;-</span> <span class="fu">rownames</span>(contacts_byage_matrix)</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>initial_conditions</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>                S E     I R V
+[0,20)   0.999999 0 1e-06 0 0
+[20,40)  1.000000 0 0e+00 0 0
+[40,Inf) 1.000000 0 0e+00 0 0</code></pre>
+</div>
+</div>
+</section>
+<section id="estrutura-populacional" class="level3">
+<h3 class="anchored" data-anchor-id="estrutura-populacional">3. Estrutura populacional</h3>
+<p>O objeto de população requer um vetor contendo a estrutura demográfica da população. O vetor demográfico deve ser um vetor nomeado contendo o número de indivíduos em cada faixa etária da nossa população de interesse. Neste exemplo, podemos extrair as informações demográficas do objeto <code>contacts_byage</code> que obtivemos usando o pacote <code>socialmixr</code>.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co"># extrair o vetor demográfico</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>demography_vector <span class="ot">&lt;-</span> contacts_byage<span class="sc">$</span>demography<span class="sc">$</span>population</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="co"># usar a matriz de contato para atribuir os nomes das faixas etárias</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(demography_vector) <span class="ot">&lt;-</span> <span class="fu">rownames</span>(contacts_byage_matrix)</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>demography_vector</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>  [0,20)  [20,40) [40,Inf) 
+15842062 17625140 33954633 </code></pre>
+</div>
+</div>
+<p>Para criar nosso objeto de população, a partir do pacote <code>{epidemics}</code>, chamamos a função <code>epidemics::population()</code> especificando um nome, a matriz de contato, o vetor demográfico e as condições iniciais.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(epidemics)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>uk_population <span class="ot">&lt;-</span> epidemics<span class="sc">::</span><span class="fu">population</span>(</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">"UK"</span>,</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">contact_matrix =</span> contacts_byage_matrix,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">demography_vector =</span> demography_vector,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">initial_conditions =</span> initial_conditions</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Checklist">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Checklist
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Imprima o objeto <code>uk_population</code>.</p>
+<p>Ele deve reunir todas as informações de entrada:</p>
+<ul>
+<li>Nome da população</li>
+<li>Demografia</li>
+<li>Matriz de contato</li>
+<li>Condições iniciais</li>
+</ul>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Para o instrutor">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-15-contents" aria-controls="callout-15" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>Para o instrutor
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-15" class="callout-15-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Faça uma pausa.</p>
+<p>Use os slides para apresentar os tópicos de:</p>
+<ul>
+<li>Parâmetros do modelo e</li>
+<li>Novas infecções.</li>
+</ul>
+<p>Em seguida, continue com o livecoding.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="parâmetros-do-modelo" class="level3">
+<h3 class="anchored" data-anchor-id="parâmetros-do-modelo">4. Parâmetros do modelo</h3>
+<p>Para executar nosso modelo, precisamos especificar os parâmetros do modelo:</p>
+<ul>
+<li>taxa de transmissão <span class="math inline">\(\beta\)</span>,</li>
+<li>taxa de infecciosidade <span class="math inline">\(\alpha\)</span> (período pré-infeccioso = <span class="math inline">\(1/\alpha\)</span>),</li>
+<li>taxa de recuperação <span class="math inline">\(\gamma\)</span> (período infeccioso = <span class="math inline">\(1/\gamma\)</span>).</li>
+</ul>
+<p>No <code>epidemics</code>, especificamos as entradas do modelo como:</p>
+<ul>
+<li><code>transmission_rate</code> <span class="math inline">\(\beta = R_0 \gamma\)</span>,</li>
+<li><code>infectiousness_rate</code> = <span class="math inline">\(\alpha\)</span>,</li>
+<li><code>recovery_rate</code> = <span class="math inline">\(\gamma\)</span>,</li>
+</ul>
+<p>Simularemos uma cepa de influenza com potencial pandêmico com <span class="math inline">\(R_0=1.46\)</span>, com um período pré-infeccioso de 3 dias e período infeccioso de 7 dias. Portanto, nossas entradas serão:</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># períodos de tempo</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>preinfectious_period <span class="ot">&lt;-</span> <span class="fl">3.0</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>infectious_period <span class="ot">&lt;-</span> <span class="fl">7.0</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>basic_reproduction <span class="ot">&lt;-</span> <span class="fl">1.46</span></span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># taxas</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>infectiousness_rate <span class="ot">&lt;-</span> <span class="fl">1.0</span> <span class="sc">/</span> preinfectious_period</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>recovery_rate <span class="ot">&lt;-</span> <span class="fl">1.0</span> <span class="sc">/</span> infectious_period</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>transmission_rate <span class="ot">&lt;-</span> basic_reproduction <span class="sc">/</span> infectious_period</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>O número básico de reprodução <span class="math inline">\(R_0\)</span>
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>O número básico de reprodução, <span class="math inline">\(R_0\)</span>, para o modelo SEIR é:</p>
+<p><span class="math display">\[ R_0 = \frac{\beta}{\gamma}.\]</span></p>
+<p>Portanto, podemos reescrever a taxa de transmissão <span class="math inline">\(\beta\)</span> como:</p>
+<p><span class="math display">\[ \beta = R_0 \gamma.\]</span></p>
+<p>Se precisar de uma recapitulação, leia sobre a razão <span class="math inline">\(\beta/\gamma\)</span> neste artigo de duas páginas de <a href="https://www.nature.com/articles/s41592-020-0822-z">Bjørnstad et al., 2020</a>.</p>
+</div>
+</div>
+</section>
+</section>
+<section id="executar-o-modelo" class="level2">
+<h2 class="anchored" data-anchor-id="executar-o-modelo">Executar o modelo</h2>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Executar (resolver) o modelo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Para modelos descritos por <a href="../glossario.html#ordinary">equações diferenciais</a>, “executar” o modelo significa, na verdade, pegar o sistema de equações diferenciais e “resolvê-lo” para descobrir como o número de pessoas nos compartimentos subjacentes muda ao longo do tempo. Como as equações diferenciais descrevem a taxa de variação nos estados da doença em relação ao tempo, e não o número de indivíduos em cada um desses estados, geralmente precisamos usar métodos numéricos para resolver as equações.</p>
+<p>Um <em>solucionador de EDO</em> (ODE solver) é o software usado para encontrar soluções numéricas para equações diferenciais. Se tiver interesse em como um sistema de equações diferenciais é resolvido no <code>{epidemics}</code>, sugerimos que leia a seção sobre <a href="https://epiverse-trace.github.io/epidemics/articles/design-principles.html#ode-systems-and-models">ODE systems and models</a> na vinheta “Design principles”.</p>
+</div>
+</div>
+<p>Agora estamos prontos para executar nosso modelo usando <code>epidemics::model_default()</code> do pacote <code>{epidemics}</code>.</p>
+<p>Vamos especificar <code>time_end=600</code> para executar o modelo por 600 dias.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>output <span class="ot">&lt;-</span> epidemics<span class="sc">::</span><span class="fu">model_default</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="co"># população</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">population =</span> uk_population,</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># taxas</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">transmission_rate =</span> transmission_rate,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">infectiousness_rate =</span> infectiousness_rate,</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">recovery_rate =</span> recovery_rate,</span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># tempo</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">time_end =</span> <span class="dv">600</span>, <span class="at">increment =</span> <span class="fl">1.0</span></span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(output)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>    time demography_group compartment    value
+   &lt;num&gt;           &lt;char&gt;      &lt;char&gt;    &lt;num&gt;
+1:     0           [0,20) susceptible 15842046
+2:     0          [20,40) susceptible 17625140
+3:     0         [40,Inf) susceptible 33954633
+4:     0           [0,20)     exposed        0
+5:     0          [20,40)     exposed        0
+6:     0         [40,Inf)     exposed        0</code></pre>
+</div>
+</div>
+<p><em>Nota: Este modelo também possui a funcionalidade de incluir vacinação e monitora o número de indivíduos vacinados ao longo do tempo. Embora não tenhamos especificado nenhuma vacinação, ainda há um compartimento de vacinados na saída (sem nenhum indivíduo). Abordaremos o uso da vacinação em tutoriais futuros.</em></p>
+<p>A saída do nosso modelo consiste no número de indivíduos em cada compartimento em cada faixa etária ao longo do tempo. Podemos visualizar apenas os indivíduos infecciosos (aqueles na classe <span class="math inline">\(I\)</span>) ao longo do tempo.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>output <span class="sc">%&gt;%</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(compartment <span class="sc">==</span> <span class="st">"infectious"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">x =</span> time,</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> value,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">color =</span> demography_group,</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>      <span class="at">linetype =</span> compartment</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">labels =</span> scales<span class="sc">::</span>comma</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Simulation time (days)"</span>,</span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">linetype =</span> <span class="st">"Compartment"</span>,</span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Individuals"</span></span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="02-simular-transmissao_files/figure-html/visualise-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Incrementos de tempo
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Observe que há um argumento padrão <code>increment = 1</code>. Isso se refere ao passo de tempo do solucionador de EDO. Quando os parâmetros são especificados em uma escala de tempo diária e o número máximo de passos de tempo (<code>time_end</code>) é em dias, o passo de tempo padrão do solucionador de EDO é de um dia.</p>
+<p>A escolha do incremento dependerá da escala de tempo dos parâmetros e da taxa na qual os eventos podem ocorrer. Em geral, o incremento deve ser menor que o evento mais rápido que pode ocorrer. Por exemplo:</p>
+<ul>
+<li>Se os parâmetros estiverem em uma escala de tempo <em>diária</em>, e todos os eventos forem notificados em uma base diária, então o incremento deve ser igual a um dia;</li>
+<li>Se os parâmetros estiverem em uma escala de tempo <em>mensal</em>, mas alguns eventos ocorrerem dentro de um mês, então o incremento deve ser menor que um mês.</li>
+</ul>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Para se aprofundar">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Para se aprofundar
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Duas funções auxiliares no <code>{epidemics}</code></strong></p>
+<p>Use <code>epidemics::epidemic_peak()</code> para obter o tempo e o tamanho do maior pico de um compartimento para todos os grupos demográficos. Por padrão, isso será calculado para o compartimento de infecciosos.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>epidemics<span class="sc">::</span><span class="fu">epidemic_peak</span>(<span class="at">data =</span> output)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   demography_group compartment  time    value
+             &lt;char&gt;      &lt;char&gt; &lt;num&gt;    &lt;num&gt;
+1:           [0,20)  infectious   315 700275.9
+2:          [20,40)  infectious   319 673306.3
+3:         [40,Inf)  infectious   323 983140.5</code></pre>
+</div>
+</div>
+<p>Use <code>epidemics::epidemic_size()</code> para obter o tamanho da epidemia em qualquer etapa entre o início e o fim. Isso é calculado como o número de indivíduos <em>recuperados</em> da infecção naquela etapa da epidemia.</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>epidemics<span class="sc">::</span><span class="fu">epidemic_size</span>(<span class="at">data =</span> output)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1]  9979758  9732524 14392091</code></pre>
+</div>
+</div>
+<p>Essas funções de resumo podem ajudar você a obter saídas relevantes para comparações de cenários ou qualquer outra análise posterior.</p>
+</div>
+</div>
+<p>A figura acima mostra o número total ou a quantidade cumulativa de indivíduos no compartimento de infecciosos a cada instante de tempo. Se você quiser mostrar a <em>carga total</em> da doença, o compartimento <code>infectious</code> é o mais apropriado. Por outro lado, se quiser mostrar a <em>carga diária</em>, você pode usar <code>epidemics::new_infections()</code> para obter a incidência diária.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="No Brasil: a semana epidemiológica é a unidade de análise">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>No Brasil: a semana epidemiológica é a unidade de análise
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>Na rotina de vigilância, a incidência diária raramente é analisada como está: ela é agregada por <strong>semana epidemiológica (SE)</strong>, que no Brasil começa no domingo. O calendário oficial de semanas está no SINAN (<a href="http://portalsinan.saude.gov.br/calendario-epidemiologico">Calendário epidemiológico do SINAN</a>).</p>
+</div>
+</div>
+<div class="callout callout-style-default callout-note callout-titled" title="Detalhes">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-21-contents" aria-controls="callout-21" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Detalhes
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-21" class="callout-21-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Observe que o número de novos indivíduos infectados a cada momento (como na figura abaixo) é menor do que o número cumulativo de indivíduos infecciosos a cada momento (como na figura acima).</p>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Novas infecções</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>newinfections_bygroup <span class="ot">&lt;-</span> epidemics<span class="sc">::</span><span class="fu">new_infections</span>(<span class="at">data =</span> output)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualizar a propagação da epidemia em termos de novas infecções</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>newinfections_bygroup <span class="sc">%&gt;%</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> time, <span class="at">y =</span> new_infections, <span class="at">colour =</span> demography_group)) <span class="sc">+</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">breaks =</span> scales<span class="sc">::</span><span class="fu">breaks_pretty</span>(<span class="at">n =</span> <span class="dv">5</span>),</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">labels =</span> scales<span class="sc">::</span>comma</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>()</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="02-simular-transmissao_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled" title="Para o instrutor">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-22-contents" aria-controls="callout-22" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Importante</span>Para o instrutor
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-22" class="callout-22-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Interrompa o livecoding.</p>
+<p>Sugira que os participantes leiam o restante do episódio.</p>
+<p>Retorne aos slides.</p>
+</div>
+</div>
+</div>
+</section>
+<section id="levar-em-conta-a-incerteza" class="level2">
+<h2 class="anchored" data-anchor-id="levar-em-conta-a-incerteza">Levar em conta a incerteza</h2>
+<p>O modelo epidêmico é <a href="../glossario.html#deterministic">determinístico</a>, o que significa que funciona como um relógio: os mesmos parâmetros sempre levarão à mesma trajetória. Um modelo determinístico é aquele em que o resultado é completamente determinado pelas condições iniciais e pelos parâmetros, sem variação aleatória. No entanto, a realidade não é tão previsível. Há duas razões principais para isso: o processo de transmissão pode envolver aleatoriedade, e podemos não conhecer as características epidemiológicas exatas do patógeno de nosso interesse. No próximo episódio, consideraremos modelos “estocásticos” (ou seja, modelos nos quais podemos definir o processo que gera a aleatoriedade na transmissão). Enquanto isso, podemos incluir a incerteza no valor dos parâmetros que entram no modelo determinístico. Para levar isso em conta, devemos executar nosso modelo para diferentes combinações de parâmetros.</p>
+<p>Executamos nosso modelo com <span class="math inline">\(R_0= 1.5\)</span>.No entanto, acreditamos que <span class="math inline">\(R_0\)</span> segue uma distribuição normal com média 1,5 e desvio padrão 0,05. Para levar em conta a incerteza, executaremos o modelo para diferentes valores de <span class="math inline">\(R_0\)</span>. Os passos que seguiremos para fazer isso são:</p>
+<ol type="1">
+<li>Obter 100 amostras de uma distribuição normal</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># especificar a média e o desvio padrão de R0</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>r_estimate_mean <span class="ot">&lt;-</span> <span class="fl">1.5</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a>r_estimate_sd <span class="ot">&lt;-</span> <span class="fl">0.05</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Gerar 100 amostras de R</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>r_samples <span class="ot">&lt;-</span> withr<span class="sc">::</span><span class="fu">with_seed</span>(</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed =</span> <span class="dv">1</span>,</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rnorm</span>(</span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">n =</span> <span class="dv">100</span>, <span class="at">mean =</span> r_estimate_mean, <span class="at">sd =</span> r_estimate_sd</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>infectious_period <span class="ot">&lt;-</span> <span class="dv">7</span></span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>beta <span class="ot">&lt;-</span> r_samples <span class="sc">/</span> infectious_period</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ol start="2" type="1">
+<li>Executar o modelo 100 vezes com <span class="math inline">\(R_0\)</span> igual a uma amostra diferente a cada vez</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>output_samples <span class="ot">&lt;-</span> epidemics<span class="sc">::</span><span class="fu">model_default</span>(</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">population =</span> uk_population,</span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">transmission_rate =</span> beta,</span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">infectiousness_rate =</span> infectiousness_rate,</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">recovery_rate =</span> recovery_rate,</span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">time_end =</span> <span class="dv">600</span>, <span class="at">increment =</span> <span class="dv">1</span></span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+</div>
+<ol start="3" type="1">
+<li>Calcular a média e os quantis de 95% do número de indivíduos infecciosos em cada simulação do modelo e visualizar a saída</li>
+</ol>
+<div class="cell">
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a>output_samples <span class="sc">%&gt;%</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">r_value =</span> r_samples) <span class="sc">%&gt;%</span></span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(data) <span class="sc">%&gt;%</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(compartment <span class="sc">==</span> <span class="st">"infectious"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>() <span class="sc">+</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_line</span>(</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(time, value, <span class="at">color =</span> r_value, <span class="at">group =</span> param_set),</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">alpha =</span> <span class="dv">3</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_color_fermenter</span>(</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">palette =</span> <span class="st">"RdBu"</span>,</span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">name =</span> <span class="st">"R"</span></span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_continuous</span>(</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">labels =</span> scales<span class="sc">::</span>comma</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">cols =</span> <span class="fu">vars</span>(demography_group)</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Simulation time (days)"</span>,</span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Individuals"</span></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copiar para a área de transferência" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="02-simular-transmissao_files/figure-html/plot-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Decidir em quais parâmetros incluir incerteza depende de alguns fatores: quão bem informado é o valor de um parâmetro, por exemplo, a consistência das estimativas da literatura; quão sensíveis são as saídas do modelo às mudanças nos valores dos parâmetros; e o objetivo da modelagem. Consulte <a href="https://doi.org/10.1016%2Fj.epidem.2021.100520">McCabe et al.&nbsp;2021</a> para aprender sobre os diferentes tipos de incerteza na modelagem de doenças infecciosas.</p>
+<div class="desafio callout callout-style-default callout-tip callout-titled" title="Desafio">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Dica</span>Desafio
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p>A partir da figura acima:</p>
+<ul>
+<li><p>Como o tempo e o tamanho do pico epidêmico de indivíduos infecciosos em cada faixa etária mudam à medida que o número básico de reprodução varia dentro do seu intervalo de incerteza? Descreva.</p></li>
+<li><p>Com base na definição do número básico de reprodução, essas mudanças são esperadas? Explique brevemente.</p></li>
+</ul>
+<div class="callout callout-style-default callout-note callout-titled" title="Dica">
+<div class="callout-header d-flex align-content-center collapsed" data-bs-toggle="collapse" data-bs-target=".callout-23-contents" aria-controls="callout-23" aria-expanded="false" aria-label="Toggle callout">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Dica
+</div>
+<div class="callout-btn-toggle d-inline-block border-0 py-1 ps-1 pe-0 float-end"><i class="callout-toggle"></i></div>
+</div>
+<div id="callout-23" class="callout-23-contents callout-collapse collapse">
+<div class="callout-body-container callout-body">
+<p>Para interpretar a saída com base no momento (tempo) e no tamanho do pico de infecção, você pode encontrar um guia nesta introdução de duas páginas à modelagem de doenças infecciosas:</p>
+<ul>
+<li>Bjørnstad ON, Shea K, Krzywinski M, Altman N. <strong>Modeling infectious epidemics.</strong> Nat Methods. 2020 May;17(5):455-456. doi: 10.1038/s41592-020-0822-z. PMID: 32313223. <a href="https://www.nature.com/articles/s41592-020-0822-z" class="uri">https://www.nature.com/articles/s41592-020-0822-z</a></li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="resumo" class="level2">
+<h2 class="anchored" data-anchor-id="resumo">Resumo</h2>
+<p>Neste tutorial, aprendemos a simular a propagação de doenças usando um modelo matemático. Uma vez escolhido o modelo, os parâmetros e outras entradas devem ser especificados da maneira correta para realizar as simulações do modelo. No próximo tutorial, consideraremos como escolher o modelo adequado para diferentes tarefas.</p>
+<div class="callout callout-style-default callout-note callout-titled" title="Pontos-chave">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+<span class="screen-reader-only">Nota</span>Pontos-chave
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<ul>
+<li>Trajetórias de doenças podem ser geradas usando o pacote R <code>{epidemics}</code></li>
+<li>A incerteza deve ser incluída nas trajetórias do modelo usando uma faixa de valores dos parâmetros do modelo</li>
+</ul>
+</div>
+</div>
+
+
+</section>
+
+</main> <!-- /main -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copiada");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copiada");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+            // target, if specified
+            link.setAttribute("target", "_blank");
+            if (link.getAttribute("rel") === null) {
+              link.setAttribute("rel", "noopener");
+            }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+<nav class="page-navigation">
+  <div class="nav-page nav-page-previous">
+      <a href="../episodios/01-matrizes-de-contato.html" class="pagination-link" aria-label="Matrizes de contato">
+        <i class="bi bi-arrow-left-short"></i> <span class="nav-page-text"><span class="chapter-title">Matrizes de contato</span></span>
+      </a>          
+  </div>
+  <div class="nav-page nav-page-next">
+      <a href="../episodios/03-escolher-modelo.html" class="pagination-link" aria-label="Escolher um modelo adequado">
+        <span class="nav-page-text"><span class="chapter-title">Escolher um modelo adequado</span></span> <i class="bi bi-arrow-right-short"></i>
+      </a>
+  </div>
+</nav>
+</div> <!-- /content -->
+<footer class="footer">
+  <div class="nav-footer">
+    <div class="nav-footer-left">
+<p>Baseado em Epiverse-TRACE <em>Tutorials Late</em> (CC-BY 4.0)</p>
+</div>   
+    <div class="nav-footer-center">
+      &nbsp;
+    <div class="toc-actions d-sm-block d-md-none"><ul><li><a href="https://github.com/MVMLima/tutorials-late-pt/edit/main/episodios/02-simular-transmissao.qmd" class="toc-action"><i class="bi bi-github"></i>Editar essa página</a></li><li><a href="https://github.com/MVMLima/tutorials-late-pt/issues/new" class="toc-action"><i class="bi empty"></i>Criar uma issue</a></li></ul></div></div>
+    <div class="nav-footer-right">
+<p>Adaptação PT-BR: Marcos V. M. de Lima</p>
+</div>
+  </div>
+</footer>
+
+
+
+
+</body></html>
