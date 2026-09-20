@@ -1,0 +1,83 @@
+# Licença e créditos
+
+## Material original
+
+Este curso é uma **adaptação** do tutorial:
+
+> Minter A, Degoot A, Valle-Campos A, Gruson H, Bah B, Funk S, Eggo R, Kucharski A (2026).
+> *Epiverse-TRACE Tutorials Late: Scenario modelling for outbreak analytics with R.*
+> DOI: [10.5281/zenodo.21512057](https://doi.org/10.5281/zenodo.21512057). Versão v2026-07-23.
+> <https://epiverse-trace.github.io/tutorials-late/>
+
+O material original é desenvolvido pela iniciativa [Epiverse-TRACE](https://epiverse-trace.github.io/)
+e foi construído sobre o modelo de lição do [The Carpentries
+Workbench](https://carpentries.github.io/workbench/) (modelo publicado sob licença CC BY).
+
+## Licença
+
+O conteúdo instrucional original é publicado sob a licença
+[Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+Esta adaptação é publicada sob **a mesma licença CC BY 4.0**, que permite copiar, redistribuir,
+adaptar e usar o material para qualquer finalidade, inclusive comercial, desde que o crédito seja
+dado ao material original, seja indicado o link da licença e seja informado se houve alterações.
+
+**Como citar esta adaptação:**
+
+> Lima MVM (2026). *Modelagem de cenários para análise de surtos com R: matrizes de contato,
+> simulação da transmissão, intervenções e carga de doença.* Adaptação em português brasileiro de
+> Epiverse-TRACE Tutorials Late. <https://github.com/MVMLima/tutorials-late-pt>
+
+## O que foi alterado nesta adaptação
+
+- Tradução integral para o português brasileiro.
+- Reorganização do formato de lição (Carpentries Workbench) para livro digital em
+  [Quarto](https://quarto.org/).
+- Os pacotes, as funções, os nomes de colunas e os conjuntos de dados permaneceram **exatamente**
+  como no original, para que o código continue funcionando sem alterações.
+- Inclusão de caixas de contexto brasileiro, escritas para esta adaptação, ligando o conteúdo à
+  rotina de vigilância (SIVEP-Gripe, SINAN, SI-PNI, DATASUS, CNES, PNI) e às bases públicas do
+  Ministério da Saúde. Cada caixa traz a fonte consultada.
+- **Tradução dos rótulos dos diagramas** (blocos Mermaid) que descrevem os modelos compartimentais.
+  A estrutura dos diagramas — nós, setas e classes — não foi alterada; apenas o texto que o leitor
+  vê. O verificador trata esses blocos separadamente por isso.
+- Reordenação alfabética das entradas do glossário conforme a ordem do português.
+- Inclusão do guia para quem conduz a oficina.
+- **Não** foi incluído o episódio opcional *Contact matrix normalization*, que não faz parte da
+  navegação do curso original: o único link que apontava para ele foi redirecionado para a página
+  publicada no site original.
+
+## Ressalvas e defeitos do material original
+
+Registrado aqui para que ninguém perca tempo procurando erro de tradução onde há outra causa.
+
+- **Seção de dados apontando para o tutorial errado.** A página de Setup do material original tem
+  uma seção "Data sets" que manda baixar `ebola_cases.csv` e `sarscov2_cases_deaths.csv` — arquivos
+  do tutorial *Middle*, que este curso **não usa**. Verificamos os sete episódios: nenhum lê arquivo
+  CSV do disco; todos os dados vêm de pacotes (inquéritos de contato via `{contactsurveys}` e
+  demografia via `{wpp2024}`). Na página de Setup desta adaptação a seção foi reescrita para
+  descrever o fluxo real, e o texto original não foi mantido.
+- **$R_0$ inconsistente no episódio 2.** O texto anuncia $R_0 = 1.5$ em um ponto em que a simulação
+  anterior usou 1.46. Mantivemos os dois valores como estão no original.
+- **Desafio do episódio 2 descreve outra coisa.** O terceiro passo do desafio pede calcular média e
+  quantis de 95% das trajetórias, mas o código que vem em seguida plota todas as trajetórias
+  individuais. Traduzimos o texto como está.
+- **Frases incompletas no episódio 6.** O original traz "Targeting younger groups can the number of
+  deaths…" (falta o verbo) e "Investigate the impact lifting the after implementing the vaccine"
+  (falta o substantivo). Traduzimos completando o sentido, que é o mínimo para a frase existir em
+  português; o restante do parágrafo segue o original.
+- **Nomes de arquivos e de objetos.** Os nomes de pastas do site original (`learners/`,
+  `episodes/`) não existem aqui: a navegação é a de um livro Quarto. Nada no código dos episódios
+  depende desses caminhos.
+
+## Versões verificadas
+
+Ambiente em que esta adaptação foi renderizada e conferida (20/09/2026): R 4.6.1, Quarto 1.8.27,
+`{epidemics}` 0.5.0, `{contactsurveys}` 0.2.0, `{socialmixr}` 0.7.0, `{wpp2024}` 1.1.3. O curso foi
+escrito para versões específicas desses pacotes; com versões futuras, algum argumento pode mudar de
+nome. O código não foi alterado de propósito, para que a adaptação envelheça junto com o material
+de referência.
+
+## Avaliação, conserto e sugestões
+
+Se você encontrar erro de tradução, link quebrado ou explicação confusa, abra uma *issue* no
+repositório: <https://github.com/MVMLima/tutorials-late-pt/issues>

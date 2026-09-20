@@ -1,0 +1,188 @@
+---
+title: "Notas para quem conduz a oficina"
+---
+
+Este guia é para quem vai **ministrar** a oficina. Ele não substitui os episódios: traz os tempos,
+o que demonstrar, o que deixar para os participantes fazerem e onde as turmas costumam travar.
+
+## Tempos sugeridos
+
+Os tempos vêm do cabeçalho de cada episódio do material original:
+
+| Episódio | Ensino | Exercícios | Total |
+|---|---|---|---|
+| 1. Matrizes de contato | 40 min | 10 min | 50 min |
+| 2. Simular a transmissão | 45 min | 30 min | 75 min |
+| 3. Escolher um modelo adequado | 10 min | 20 min | 30 min |
+| 4. Modelar intervenções | 45 min | 30 min | 75 min |
+| 5. Comparar desfechos das intervenções | 45 min | 30 min | 75 min |
+| 6. Comparar estratégias de vacinação | 50 min | 20 min | 70 min |
+| 7. Modelar a carga de doença | 40 min | 10 min | 50 min |
+| **Total** | **275 min** | **150 min** | **425 min = 7h05** |
+
+São **mais de sete horas** de conteúdo: não cabe em um dia só com intervalo. Duas opções que
+funcionam: dois dias (episódios 1–3 e 4–7) ou um dia único com os episódios 1, 2, 5 e 7 e o resto
+como leitura.
+
+::: {.callout-important title="Rede é pré-requisito, não detalhe"}
+
+Quase todos os episódios baixam dados durante a execução: os inquéritos de contato vêm do Zenodo
+(via `{contactsurveys}`) e a demografia vem do `{wpp2024}`. Teste o download na rede do local antes
+da oficina — em rede com proxy ou bloqueio, o episódio para na primeira célula e a aula inteira
+trava.
+
+:::
+
+## Pré-requisitos dos participantes
+
+- R intermediário: ler dados, transformar, reorganizar e fazer gráficos.
+- Familiaridade com `{dplyr}`, `{tidyr}` e `{ggplot2}`, e uso do pipe (`%>%` ou `|>`).
+- Teoria de epidemias em nível básico: parâmetros epidemiológicos, períodos da doença e a ideia de
+  modelo compartimental (S, E, I, R).
+- As etapas anteriores da trilha (*Tutorials Early* e *Middle*) ajudam, mas nada aqui depende do
+  código delas.
+
+## Antes da oficina: checklist de preparação
+
+1. **Instale os pacotes antes e teste o carregamento.** No Linux, o `{epidemics}` não está no CRAN
+   — a instalação vem do repositório do Epiverse; e o `{wpp2024}` vem do GitHub
+   (`PPgp/wpp2024`), não do CRAN. A página de [Setup](setup.qmd) traz os dois caminhos.
+2. **Confirme o download dos dados**: uma chamada a `contactsurveys::download_survey()` e um
+   `socialmixr::contact_matrix()` já provam que a rede e os pacotes estão funcionando.
+3. **Conferência do ambiente usado nesta adaptação** (20/09/2026): R 4.6.1, Quarto 1.8.27,
+   `{epidemics}` 0.5.0, `{contactsurveys}` 0.2.0, `{socialmixr}` 0.7.0, `{wpp2024}` 1.1.3. Versões
+   diferentes das do material podem mudar argumentos de função — vale rodar um episódio inteiro
+   antes.
+4. **Projetor**: os gráficos deste curso têm eixos e legendas longas. Aumente o zoom do editor e do
+   console antes de começar.
+5. **Combine uma pasta de trabalho única.** O curso não lê arquivos do disco (os dados vêm pela
+   rede), mas os objetos criados em um episódio são usados no seguinte — quem começa do meio
+   precisa rodar as células anteriores.
+
+## Como conduzir cada episódio
+
+### 1. Matrizes de contato
+
+O episódio monta a matriz de contato do Reino Unido a partir do inquérito POLYMOD e mostra como ela
+alimenta $R_0$, taxas de contato e modelos estruturados por idade.
+
+O que demonstrar: a inspeção de países disponíveis com `socialmixr::load_survey()` e o argumento
+`survey_pop` — é ali que se percebe que a matriz **depende de uma estrutura populacional externa**.
+Sem esse argumento, a função não roda.
+
+O que deixar para os participantes fazerem: o desafio que troca o país do inquérito (a Zâmbia
+aparece no material) e a leitura da matriz simétrica.
+
+Ponto de atenção: a seção de matrizes sintéticas é o gancho para a realidade brasileira — não há
+inquérito de contato brasileiro na coleção consultada (ver caixa no episódio).
+
+### 2. Simular a transmissão
+
+Episódio central do curso: montar o modelo (matriz de contato, condições iniciais, estrutura
+populacional, parâmetros) e rodar a simulação com `epidemics::model_default()`.
+
+O que demonstrar: a diferença entre **parâmetro de taxa** e **duração** (o modelo usa taxas $1/x$),
+e a comparação entre a carga total (`infectious`) e a incidência diária
+(`epidemics::new_infections()`).
+
+O que deixar para os participantes fazerem: os dois desafios, que mexem em valores de $R_0$ e nas
+condições iniciais.
+
+Ponto de atenção: o material original tem uma inconsistência de texto — em um trecho o texto diz
+$R_0 = 1.5$ e a simulação anterior usa 1.46. Mantivemos como está no original (registrado em
+[Licença e créditos](licenca.qmd)).
+
+### 3. Escolher um modelo adequado
+
+Episódio conceitual, quase sem código (10 min de ensino). Serve para decidir *se* e *qual* modelo
+usar, antes de sair rodando.
+
+O que demonstrar: as perguntas-guia do episódio (determinístico ou estocástico? qual o desfecho de
+interesse? como a transmissão é formulada? haverá intervenção?) e a tabela de modelos disponíveis
+no `{epidemics}`.
+
+O que deixar para os participantes fazerem: o desafio do surto de Ebola, que exige escolher o
+modelo e justificar.
+
+### 4. Modelar intervenções
+
+Aqui as intervenções entram no modelo de duas formas distintas: reduzindo a **taxa de contato**
+(fechamento de escolas, distanciamento) ou reduzindo a **taxa de transmissão** (máscaras).
+
+O que demonstrar: `epidemics::intervention()` com seus argumentos e o efeito de uma intervenção que
+começa em um dia e dura um período definido. Vale rodar com e sem intervenção na mesma projeção.
+
+Ponto de atenção: é o episódio mais longo de código contínuo. Se o tempo estiver curto, demonstre
+um tipo de intervenção e deixe os outros como exercício.
+
+### 5. Comparar desfechos das intervenções
+
+O conceito central é o **cenário de base (contrafactual)**: sem ele, "reduziu 30%" não significa
+nada.
+
+O que demonstrar: `epidemics::outcomes_averted()`, que transforma duas trajetórias em um número
+comparável, e o modelo Vacamole (COVID-19 com hospitalização e morte) como exemplo de modelo com
+desfechos graves.
+
+O que deixar para os participantes fazerem: o desafio do Ebola, que repete o fluxo com outro
+patógeno.
+
+### 6. Comparar estratégias de vacinação
+
+O episódio mais denso do curso: efeitos diretos e indiretos, limiar de imunidade de rebanho,
+priorização por idade, risco de morte por faixa etária e a interação entre vacinação e NPIs.
+
+O que demonstrar: o gráfico que compara estratégias de direcionamento — a conclusão contra-intuitiva
+(priorizar quem mais morre nem sempre é o que mais reduz mortes) é o ponto alto da oficina.
+
+O que deixar para os participantes fazerem: o desafio sobre suspender a NPI em momentos diferentes.
+
+Ponto de atenção: são dezoito execuções do modelo no mesmo episódio. Rode uma vez antes para saber
+quanto tempo leva na máquina da sala e avise a turma.
+
+### 7. Modelar a carga de doença
+
+Fecha o curso convertendo a saída do modelo em demanda por serviços de saúde, com **convolução**:
+a trajetória de infecções passa pelas distribuições de tempo até internação, permanência e alta.
+
+O que demonstrar: o desenho do modelo de carga (o esquema do episódio) antes de mostrar o código —
+aqui a dificuldade é conceitual, não de R.
+
+Ponto de atenção: é o episódio que mais depende de dados locais (tempo de internação, letalidade).
+Se a turma for da vigilância, vale discutir quais desses parâmetros existem no serviço deles.
+
+## Onde as turmas costumam travar
+
+- **Instalação de pacotes**: `{epidemics}` fora do CRAN e `{wpp2024}` no GitHub. É o gargalo número
+  um em sala; resolva antes, não durante.
+- **Rede**: download de inquéritos e de dados demográficos. Sem internet, boa parte do curso não
+  roda (ver caixa no início desta página).
+- **Estrutura populacional no `socialmixr`**: o argumento `survey_pop` exige uma tabela de duas
+  colunas (`lower.age.limit` e `population`). Passar o objeto do `{wpp2024}` direto, sem o
+  `filter`/`select`/`mutate` do exemplo, dá erro de colunas inconsistentes.
+- **Memória**: `data(popAge1dt, package = "wpp2024")` carrega uma tabela longa com milhões de
+  linhas. Em máquina com pouca memória, o R fica lento a partir daí.
+- **Versão dos pacotes**: o curso tem trechos escritos para versões específicas do `{epidemics}`.
+  Se a turma copiar código de outros tutoriais, funções podem ter mudado de nome.
+- **Achar que o modelo travou**: não há MCMC neste curso — os modelos do `{epidemics}` são
+  equações diferenciais resolvidas direto, sem ajuste bayesiano. Ainda assim, o episódio 6 roda
+  dezoito simulações e leva quase um minuto: medido nesta adaptação, **47 segundos** só para
+  renderizar esse episódio. A barra de progresso para por alguns segundos e dá a impressão de
+  travamento.
+
+## Adaptando para os seus dados
+
+O curso trabalha com o Reino Unido (inquéritos POLYMOD e de outros países) e com a demografia da
+ONU. Para trazer a realidade local:
+
+- **População por faixa etária**: no Brasil, Censo, estimativas e projeções do IBGE, publicadas
+  pelo DATASUS — há pacote R que baixa esses microdados direto.
+- **Matriz de contato**: não há inquérito brasileiro na coleção consultada. Use uma matriz
+  sintética ou adaptada e **registre a escolha** junto com a análise, porque ela muda o resultado.
+- **Cenários**: as medidas não farmacológicas no Brasil foram decididas por estados e municípios,
+  com conteúdo e momento heterogêneos — trate o cenário como conjunto de hipóteses, não como um
+  parâmetro conhecido.
+
+Antes de usar base real, verifique a política de uso dos dados no seu serviço e trabalhe sempre que
+possível com **dados agregados ou anonimizados**. Dados de saúde são dados pessoais sensíveis, e o
+compartilhamento em sala de aula precisa seguir a LGPD e as regras da instituição.
