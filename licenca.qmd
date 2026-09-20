@@ -81,3 +81,5 @@ de referência.
 
 Se você encontrar erro de tradução, link quebrado ou explicação confusa, abra uma *issue* no
 repositório: <https://github.com/MVMLima/tutorials-late-pt/issues>
+
+<!-- teste da guarda: mudanca de texto sem render local -->
