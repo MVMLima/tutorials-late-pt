@@ -5,6 +5,11 @@ project:
   resources:
     - data
 
+lang: pt-BR
+
+language:
+  appendices: "Apêndices"
+
 book:
   title: "Modelagem de cenários para análise de surtos com R"
   subtitle: "Matrizes de contato, simulação da transmissão, intervenções e carga de doença"
